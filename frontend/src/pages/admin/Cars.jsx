@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState,useEffect  } from "react";
+import axios from "axios";
 
 const Cars = () => {
   const [form, setForm] = useState({
@@ -12,18 +13,27 @@ const Cars = () => {
   const [edit_id, setEdit_id] = useState(null);
   const [showEform, setShowEform] = useState(false);
 
+  useEffect(() => {
+  axios.get("http://localhost:3000/cars")
+    .then(res => setCar(res.data))
+    .catch(err => console.log(err));
+}, []);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const addCar = () => {
+  const addCar = async () => {
     if (edit_id) {
-      setCar(car.map((c) => (c.id == edit_id ? { ...c, ...form } : c)));
+      await axios.put(`http://localhost:3000/cars/${edit_id}`, form);
       setEdit_id(null);
       setShowEform(false);
     } else {
-      setCar([...car, { ...form, id: Date.now() }]);
+     await axios.post("http://localhost:3000/cars", form);
     }
+     const res = await axios.get("http://localhost:3000/cars");
+    setCar(res.data);
+
 
     setForm({
       model_name: "",
@@ -33,10 +43,18 @@ const Cars = () => {
     });
   };
 
-  const deleteCar = (id) => {
-    setCar(car.filter((c) => c.id !== id));
-  };
+ 
+    const deleteCar = async (id) => {
+  try {
+    await axios.delete(`http://localhost:3000/cars/${id}`);
 
+    const res = await axios.get("http://localhost:3000/cars");
+    setCar(res.data);
+  } catch (err) {
+    console.log(err);
+  }
+};
+ 
   return (
     <>
       <div className="p-6">
@@ -96,7 +114,7 @@ const Cars = () => {
           <tbody>
             {car.map((car) => (
               <tr
-                key={car.id}
+                key={car.model_id}
                 className="border-t hover:bg-gray-50 text-center"
               >
                 <td className="p-2">{car.model_name}</td>
@@ -108,7 +126,7 @@ const Cars = () => {
                   <button
                     onClick={() => {
                       setForm(car);
-                      setEdit_id(car.id);
+                      setEdit_id(car.model_id);
                       setShowEform(true);
                     }}
                     className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded mr-2"
@@ -117,7 +135,7 @@ const Cars = () => {
                   </button>
 
                   <button
-                    onClick={() => deleteCar(car.id)}
+                    onClick={() => deleteCar(car.model_id)}
                     className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
                   >
                     Delete
