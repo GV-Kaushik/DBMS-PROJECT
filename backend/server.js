@@ -127,6 +127,70 @@ app.put("/cars/:id", async (req, res) => {
   }
 });
 
+// Parts page Routes
+
+
+// GET ALL PARTS
+app.get("/parts", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM part ORDER BY part_id"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
+
+// ADD PART
+app.post("/parts", async (req, res) => {
+  const { part_name, category, cost, quantity } = req.body;
+
+  try {
+    await pool.query(
+      "INSERT INTO part (part_name, category, cost, quantity) VALUES ($1,$2,$3,$4)",
+      [part_name, category, cost, quantity]
+    );
+
+    res.json({ message: "Part added" });
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
+
+// DELETE PART
+app.delete("/parts/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query(
+      "DELETE FROM part WHERE part_id=$1",
+      [id]
+    );
+
+    res.json({ message: "Part deleted" });
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
+
+// UPDATE PART
+app.put("/parts/:id", async (req, res) => {
+  const { id } = req.params;
+  const { part_name, category, cost, quantity } = req.body;
+
+  try {
+    await pool.query(
+      "UPDATE part SET part_name=$1, category=$2, cost=$3, quantity=$4 WHERE part_id=$5",
+      [part_name, category, cost, quantity, id]
+    );
+
+    res.json({ message: "Part updated" });
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
