@@ -194,3 +194,53 @@ app.put("/parts/:id", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
+// Assign Parts Page routes 
+
+// ================= ASSIGN PARTS =================
+
+// GET
+app.get("/assign", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT cp.id, c.model_name, p.part_name, cp.quantity_required
+      FROM carmodel_parts cp
+      JOIN carmodel c ON cp.model_id = c.model_id
+      JOIN part p ON cp.part_id = p.part_id
+      ORDER BY cp.id
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
+
+// POST
+app.post("/assign", async (req, res) => {
+  const { model_id, part_id, quantity_required } = req.body;
+
+  try {
+    await pool.query(
+      "INSERT INTO carmodel_parts (model_id, part_id, quantity_required) VALUES ($1,$2,$3)",
+      [model_id, part_id, quantity_required]
+    );
+
+    res.json({ message: "Assigned successfully" });
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
+
+// DELETE
+app.delete("/assign/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query("DELETE FROM carmodel_parts WHERE id=$1", [id]);
+
+    res.json({ message: "Removed" });
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
