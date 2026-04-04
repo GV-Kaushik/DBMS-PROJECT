@@ -1,175 +1,120 @@
-import React from 'react'
-import { useState,useEffect } from 'react'
+import { useState, useEffect } from "react";
 import api from "../../api";
 
 const Users = () => {
-  const [users,setUsers] = useState([]);
+  const [users, setUsers] = useState([]);
 
-  const [form,setForm] = useState({
-    email:"",
-    password:"",
-    role:"",
-    phone_num:"",
-    created_date:"",
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+    role: "",
+    phone_num: "",
+    created_date: "",
   });
 
-  const [edit_id,setEdit_id] = useState(null);
+  const [edit_id, setEdit_id] = useState(null);
+  const [showEform, setShowEform] = useState(false);
+  const [search, setSearch] = useState("");
 
-  useEffect(()=>{
+  useEffect(() => {
     loadUsers();
-  },[]);
+  }, []);
 
-  const loadUsers = async()=>{
-    try{
-      const res = await api.get("/users");
-      setUsers(res.data);
-    }catch(err){
-      console.log(err);
-    }
+  const loadUsers = async () => {
+    const res = await api.get("/users");
+    setUsers(res.data);
   };
 
-  const handleChange=(e)=>{
-    const {name,value} = e.target;
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
+  const handleSubmit = async () => {
+    if (edit_id) {
+      await api.put(`/users/${edit_id}`, form);
+      setEdit_id(null);
+    } else {
+      await api.post("/users", form);
+    }
+
+    setShowEform(false);
     setForm({
-      ...form,
-      [name]:value
+      email: "",
+      password: "",
+      role: "",
+      phone_num: "",
+      created_date: "",
     });
+
+    loadUsers();
   };
 
-  const handleSubmit = async ()=>{
-    try{
-      if(edit_id){
-        await api.put(`/users/${edit_id}`,form);
-        setEdit_id(null);
-      }else{
-        await api.post("/users",form);
-      }
-
-      setForm({
-        email:"",
-        password:"",
-        role:"",
-        phone_num:"",
-        created_date:"",
-      });
-
-      loadUsers();
-    }catch(err){
-      console.log(err);
-    }
+  const handleDelete = async (id) => {
+    await api.delete(`/users/${id}`);
+    loadUsers();
   };
 
-  const handleDelete = async (id)=>{
-    try{
-      await api.delete(`/users/${id}`);
-      loadUsers();
-    }catch(err){
-      console.log(err);
-    }
-  }
-
+  const filtered = users.filter((u) =>
+    u.email.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">USERS</h1>
+    <>
+      <div className="p-6">
+        <div className="flex justify-between mb-6">
+          <h1 className="text-2xl font-bold">USERS</h1>
 
-      {/* FORM */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6 flex gap-3">
+          <button onClick={()=>setShowEform(true)} className="bg-blue-600 text-white px-4 py-2 rounded">
+            + Add User
+          </button>
+        </div>
+
+        {/* SEARCH */}
         <input
-          name="email"
-          placeholder="ENTER EMAIL"
-          value={form.email}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
+          placeholder="Search email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border p-2 w-full mb-4"
         />
 
-        <input
-          name="password"
-          placeholder="PASSWORD"
-          value={form.password}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
-        />
-
-        <input
-          name="role"
-          placeholder="ROLE"
-          value={form.role}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
-        />
-        <input
-          name="phone_num"
-          placeholder="PHONE NUMBER"
-          value={form.phone_num}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
-        />
-
-        <input
-        type='date'
-          name="created_date"
-          placeholder="DATE TIME"
-          value={form.created_date}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
-        />
-
-        <button
-          onClick={handleSubmit}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded"
-        >
-          {edit_id ? "Update User" : "Add User"}
-        </button>
-      </div>
-
-      {/* TABLE */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100 text-gray-600">
+        <table className="w-full bg-white shadow">
+          <thead className="bg-gray-100">
             <tr>
-              <th className="p-3 text-left">User Email</th>
-              <th className="p-3 text-left">Role</th>
-              <th className="p-3 text-left">Phone Number</th>
-              <th className="p-3 text-left">Date Time</th>
-              <th className="p-3 text-center">Actions</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Phone</th>
+              <th>Date</th>
+              <th>Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {users.map((u) => (
-              <tr key={u.user_id} className="border-t hover:bg-gray-50">
-                <td className="p-3">{u.email}</td>
-                <td className="p-3">{u.role}</td>
-                <td className="p-3">{u.phone_num}</td>
-                <td className="p-3">
-                  {u.created_date}
-                </td>
-                <td className="p-3 text-center space-x-2">
-                  {/* EDIT */}
+            {filtered.map((u) => (
+              <tr key={u.user_id} className="border-t text-center">
+                <td>{u.email}</td>
+                <td>{u.role}</td>
+                <td>{u.phone_num}</td>
+                <td>{u.created_date?.split("T")[0]}</td>
+
+                <td>
                   <button
                     onClick={() => {
                       setForm({
-                        email:u.email,
-                        password:"",
-                        role:u.role,
-                        phone_num:u.phone_num,
-                        created_date: u.created_date
-                        ? u.created_date.split("T")[0]
-                        : "",
+                        ...u,
+                        password: "",
+                        created_date: u.created_date?.split("T")[0] || "",
                       });
                       setEdit_id(u.user_id);
+                      setShowEform(true);
                     }}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
+                    className="bg-yellow-500 px-2 py-1 text-white mr-2"
                   >
                     Edit
                   </button>
 
-                  {/* DELETE */}
                   <button
                     onClick={() => handleDelete(u.user_id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                    className="bg-red-500 px-2 py-1 text-white"
                   >
                     Delete
                   </button>
@@ -179,8 +124,26 @@ const Users = () => {
           </tbody>
         </table>
       </div>
-    </div>
-  )
-}
 
-export default Users
+      {/* MODAL */}
+      {showEform && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+          <div className="bg-white p-6 rounded w-[400px]">
+            <input name="email" value={form.email} onChange={handleChange} placeholder="Email" className="border p-2 w-full mb-2"/>
+            <input name="password" value={form.password} onChange={handleChange} placeholder="Password" className="border p-2 w-full mb-2"/>
+            <input name="role" value={form.role} onChange={handleChange} placeholder="Role" className="border p-2 w-full mb-2"/>
+            <input name="phone_num" value={form.phone_num} onChange={handleChange} placeholder="Phone" className="border p-2 w-full mb-2"/>
+            <input type="date" name="created_date" value={form.created_date} onChange={handleChange} className="border p-2 w-full mb-4"/>
+
+            <div className="flex justify-end gap-2">
+              <button onClick={()=>setShowEform(false)} className="bg-gray-300 px-3 py-1">Cancel</button>
+              <button onClick={handleSubmit} className="bg-blue-600 text-white px-3 py-1">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default Users;

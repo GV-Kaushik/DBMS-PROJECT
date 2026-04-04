@@ -1,132 +1,86 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import api from "../../api";
 
 const Factories = () => {
   const [factories, setFactories] = useState([]);
-
-  const [form, setForm] = useState({
-    location: "",
-    capacity: "",
-  });
+  const [form, setForm] = useState({ location: "", capacity: "" });
 
   const [edit_id, setEdit_id] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     loadFactories();
   }, []);
 
   const loadFactories = async () => {
-    try {
-      const res = await api.get("/factories");
-      setFactories(res.data);
-    } catch (err) {
-      console.log(err);
-    }
+    const res = await api.get("/factories");
+    setFactories(res.data);
   };
 
-  //handle input
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  //add / update
   const handleSubmit = async () => {
-    try {
-      if (edit_id) {
-        await api.put(`/factories/${edit_id}`, form);
-        setEdit_id(null);
-      } else {
-        await api.post("/factories", form);
-      }
-
-      setForm({
-        location: "",
-        capacity: "",
-      });
-
-      loadFactories();
-    } catch (err) {
-      console.log(err);
+    if (edit_id) {
+      await api.put(`/factories/${edit_id}`, form);
+      setEdit_id(null);
+    } else {
+      await api.post("/factories", form);
     }
+
+    setShowForm(false);
+    setForm({ location: "", capacity: "" });
+    loadFactories();
   };
 
-  //delete
   const handleDelete = async (id) => {
-    try {
-      await api.delete(`/factories/${id}`);
-      loadFactories();
-    } catch (err) {
-      console.log(err);
-    }
+    await api.delete(`/factories/${id}`);
+    loadFactories();
   };
+
+  const filtered = factories.filter((f) =>
+    f.location.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div className="p-6">
-      {/* TITLE */}
-      <h1 className="text-2xl font-bold mb-4">FACTORIES</h1>
+    <>
+      <div className="p-6">
+        <div className="flex justify-between mb-6">
+          <h1 className="text-2xl font-bold">Factories</h1>
+          <button onClick={()=>setShowForm(true)} className="bg-blue-600 text-white px-4 py-2 rounded">
+            + Add Factory
+          </button>
+        </div>
 
-      {/* FORM */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6 flex gap-3">
-        <input
-          name="location"
-          placeholder="Location"
-          value={form.location}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
-        />
+        <input placeholder="Search..." value={search} onChange={(e)=>setSearch(e.target.value)} className="border p-2 w-full mb-4"/>
 
-        <input
-          name="capacity"
-          placeholder="Capacity"
-          value={form.capacity}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
-        />
-
-        <button
-          onClick={handleSubmit}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded"
-        >
-          {edit_id ? "Update Factory" : "Add Factory"}
-        </button>
-      </div>
-
-      {/* TABLE */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100 text-gray-600">
+        <table className="w-full bg-white shadow rounded">
+          <thead className="bg-gray-100">
             <tr>
-              <th className="p-3 text-left">Location</th>
-              <th className="p-3 text-left">Capacity</th>
-              <th className="p-3 text-center">Actions</th>
+              <th>Location</th>
+              <th>Capacity</th>
+              <th>Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {factories.map((f) => (
-              <tr key={f.factory_id} className="border-t">
-                <td className="p-3">{f.location}</td>
-                <td className="p-3">{f.capacity}</td>
-
-                <td className="p-3 text-center space-x-2">
-                  {/* EDIT */}
+            {filtered.map((f) => (
+              <tr key={f.factory_id} className="border-t text-center">
+                <td>{f.location}</td>
+                <td>{f.capacity}</td>
+                <td>
                   <button
                     onClick={() => {
-                      setForm({
-                        location: f.location,
-                        capacity: f.capacity,
-                      });
+                      setForm(f);
                       setEdit_id(f.factory_id);
+                      setShowForm(true);
                     }}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
+                    className="bg-yellow-500 px-2 py-1 text-white mr-2"
                   >
                     Edit
                   </button>
 
-                  {/* DELETE */}
                   <button
                     onClick={() => handleDelete(f.factory_id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                    className="bg-red-500 px-2 py-1 text-white"
                   >
                     Delete
                   </button>
@@ -136,7 +90,21 @@ const Factories = () => {
           </tbody>
         </table>
       </div>
-    </div>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+          <div className="bg-white p-6 rounded w-[400px]">
+            <input placeholder="Location" value={form.location} onChange={(e)=>setForm({...form,location:e.target.value})} className="border p-2 w-full mb-2"/>
+            <input placeholder="Capacity" value={form.capacity} onChange={(e)=>setForm({...form,capacity:e.target.value})} className="border p-2 w-full mb-4"/>
+
+            <div className="flex justify-end gap-2">
+              <button onClick={()=>setShowForm(false)} className="bg-gray-300 px-3 py-1">Cancel</button>
+              <button onClick={handleSubmit} className="bg-blue-600 text-white px-3 py-1">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

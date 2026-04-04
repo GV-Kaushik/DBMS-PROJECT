@@ -8,40 +8,41 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const navigate=useNavigate();
+const handleLogin = async () => {
+  if (!email || !password) {
+    setError("All fields are required");
+    return;
+  }
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      setError("All fields are required");
-      return;
-    }
+  try {
+    console.log("Sending:", email, password); 
 
-    try {
-      const res = await axios.post("http://localhost:3000/login", {
-        email,
-        password,
-      });
+    const res = await axios.post("http://localhost:3000/login", {
+      email,
+      password,
+    });
 
-      const { token, role } = res.data;
+    console.log("Response:", res.data); 
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
-      if(role=="admin"){
-        navigate("/admin");
-      }else if(role=="design"){
-        navigate("/design");
-      }else if(role=="production"){
-        navigate("/production");
-      }else if(role=="sales"){
-        navigate("/sales");
-      }
+    const { token, role } = res.data;
 
-      setError("");
-      alert("Login successful");
-    } catch (err) {
-      setError("Invalid credentials");
-    }
-  };
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
 
+    if (role === "admin") navigate("/admin");
+    else if (role === "design") navigate("/design");
+    else if (role === "production") navigate("/production");
+    else if (role === "sales") navigate("/sales");
+
+    setError("");
+    alert("Login successful");
+
+  } catch (err) {
+    console.log("ERROR FULL:", err); 
+    console.log("ERROR RESPONSE:", err?.response); 
+    setError("Invalid credentials");
+  }
+};
   return (
     <div className="flex items-center justify-center min-h-screen ">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-80">

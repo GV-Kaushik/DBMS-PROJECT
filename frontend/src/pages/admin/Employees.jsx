@@ -11,144 +11,103 @@ const Employees = () => {
   });
 
   const [edit_id, setEdit_id] = useState(null);
+  const [showEform, setShowEform] = useState(false);
+  const [search, setSearch] = useState("");
 
-  // LOAD EMPLOYEES
   useEffect(() => {
     loadEmployees();
   }, []);
 
   const loadEmployees = async () => {
-    try {
-      const res = await api.get("/employees");
-      setEmployees(res.data);
-    } catch (err) {
-      console.log(err);
-    }
+    const res = await api.get("/employees");
+    setEmployees(res.data);
   };
 
-  // HANDLE INPUT
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setForm({
       ...form,
       [name]: name === "factory_id" ? Number(value) : value,
     });
   };
 
-  // ADD / UPDATE
   const handleSubmit = async () => {
-    try {
-      if (edit_id) {
-        await api.put(`/employees/${edit_id}`, form);
-        setEdit_id(null);
-      } else {
-        await api.post("/employees", form);
-      }
-
-      setForm({
-        name: "",
-        role: "",
-        factory_id: "",
-      });
-
-      loadEmployees();
-    } catch (err) {
-      console.log(err);
+    if (edit_id) {
+      await api.put(`/employees/${edit_id}`, form);
+      setEdit_id(null);
+    } else {
+      await api.post("/employees", form);
     }
+
+    setShowEform(false);
+    setForm({ name: "", role: "", factory_id: "" });
+    loadEmployees();
   };
 
-  // DELETE
   const handleDelete = async (id) => {
-    try {
-      await api.delete(`/employees/${id}`);
-      loadEmployees();
-    } catch (err) {
-      console.log(err);
-    }
+    await api.delete(`/employees/${id}`);
+    loadEmployees();
   };
+
+  const filtered = employees.filter((e) =>
+    e.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div className="p-6">
-      {/* TITLE */}
-      <h1 className="text-2xl font-bold mb-4">EMPLOYEES</h1>
+    <>
+      <div className="p-6">
+        <div className="flex justify-between mb-6">
+          <h1 className="text-2xl font-bold">EMPLOYEES</h1>
 
-      {/* FORM */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6 flex gap-3">
+          <button
+            onClick={() => setShowEform(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            + Add Employee
+          </button>
+        </div>
+
+        {/* SEARCH */}
         <input
-          name="name"
-          placeholder="Enter Name"
-          value={form.name}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
+          placeholder="Search employee..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border p-2 rounded w-full mb-4"
         />
 
-        <input
-          name="role"
-          placeholder="Role"
-          value={form.role}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
-        />
-
-        <input
-          name="factory_id"
-          placeholder="Factory ID"
-          value={form.factory_id}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
-        />
-
-        <button
-          onClick={handleSubmit}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded"
-        >
-          {edit_id ? "Update Employee" : "Add Employee"}
-        </button>
-      </div>
-
-      {/* TABLE */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100 text-gray-600">
+        {/* TABLE */}
+        <table className="w-full bg-white shadow rounded">
+          <thead className="bg-gray-100">
             <tr>
-              <th className="p-3 text-left">Employee Name</th>
-              <th className="p-3 text-left">Role</th>
-              <th className="p-3 text-left">Factory Location</th>
-              <th className="p-3 text-center">Actions</th>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Factory</th>
+              <th>Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {employees.map((e) => (
-              <tr key={e.employee_id} className="border-t hover:bg-gray-50">
-                <td className="p-3">{e.name}</td>
-                <td className="p-3">{e.role}</td>
+            {filtered.map((e) => (
+              <tr key={e.employee_id} className="border-t text-center">
+                <td>{e.name}</td>
+                <td>{e.role}</td>
+                <td>{e.factory_location}</td>
 
-                <td className="p-3">
-                  {e.factory_location} (ID: {e.factory_id})
-                </td>
-
-                <td className="p-3 text-center space-x-2">
-                  {/* EDIT */}
+                <td>
                   <button
                     onClick={() => {
-                      setForm({
-                        name: e.name,
-                        role: e.role,
-                        factory_id: e.factory_id,
-                      });
+                      setForm(e);
                       setEdit_id(e.employee_id);
+                      setShowEform(true);
                     }}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
+                    className="bg-yellow-500 px-2 py-1 text-white mr-2"
                   >
                     Edit
                   </button>
 
-                  {/* DELETE */}
                   <button
                     onClick={() => handleDelete(e.employee_id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                    className="bg-red-500 px-2 py-1 text-white"
                   >
                     Delete
                   </button>
@@ -158,7 +117,23 @@ const Employees = () => {
           </tbody>
         </table>
       </div>
-    </div>
+
+      {/* MODAL */}
+      {showEform && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+          <div className="bg-white p-6 rounded w-[400px]">
+            <input name="name" value={form.name} onChange={handleChange} placeholder="Name" className="border p-2 w-full mb-2"/>
+            <input name="role" value={form.role} onChange={handleChange} placeholder="Role" className="border p-2 w-full mb-2"/>
+            <input name="factory_id" value={form.factory_id} onChange={handleChange} placeholder="Factory ID" className="border p-2 w-full mb-4"/>
+
+            <div className="flex justify-end gap-2">
+              <button onClick={()=>setShowEform(false)} className="bg-gray-300 px-3 py-1">Cancel</button>
+              <button onClick={handleSubmit} className="bg-blue-600 text-white px-3 py-1">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

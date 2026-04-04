@@ -250,77 +250,51 @@ app.put("/suppliers/:id", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+
 
 
 //FACTORY ROUTES--------------------------------------->
-//insert
-app.post("/api/factories",async(req,res)=>{
-  try{
-    const {location,capacity} = req.body;
 
-    if(!location || !capacity){
-      return res.status(400).json({error:"All fields are required"});
+// insert
+app.post("/factories", async (req, res) => {
+  try {
+    const { location, capacity } = req.body;
+
+    if (!location || !capacity) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    if (isNaN(capacity) || Number(capacity) <= 0) {
+      return res.status(400).json({ error: "Capacity must be a positive number" });
     }
 
     const result = await pool.query(
       `INSERT INTO factory (location, capacity)
-      VALUES ($1,$2)`,[location, Number(capacity)]
-    )
-    res.status(201).json({message:"Factory data added"});
-  }catch(err){
+       VALUES ($1,$2)
+       RETURNING *`,
+      [location, Number(capacity)]
+    );
+
+    res.status(201).json({
+      message: "Factory data added",
+      data: result.rows[0],
+    });
+
+  } catch (err) {
     console.log(err);
-    res.status(500).json({error: err.message});
+    res.status(500).json({ error: err.message });
   }
 });
-//read all
-app.get("/api/factories", async(req,res)=>{
-  try{
+
+
+// read all
+app.get("/factories", async (req, res) => {
+  try {
     const result = await pool.query(
       `SELECT * FROM factory ORDER BY factory_id`
     );
 
     res.status(200).json(result.rows);
-  }catch(err){
-    res.status(500).json({error:err.message});
-  }
-});
-
-//update
-app.put("/api/factories/:id",async(req,res)=>{
-  try{
-    const {location,capacity} = req.body;
-
-    const result= await pool.query(
-      `UPDATE factory
-      SET location=$1, capacity=$2 WHERE factory_id=$3
-      RETURNING *`,[location,capacity,req.params.id]
-    );
-    if(result.rowCount===0){
-      return res.status(404).json({error:"Factory not found"});
-    }
-
-    res.status(200).json(result.rows[0]);
-  }catch(err){
-    res.status(500).json({error:err.message});
-  }
-});
-
-//delete
-app.delete("/api/factories/:id", async (req, res) => {
-  try {
-    const result = await pool.query(
-      "DELETE FROM factory WHERE factory_id=$1",
-      [req.params.id]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: "Factory not found" });
-    }
-
-    res.status(200).json({ message: "Factory deleted successfully" });
 
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -328,15 +302,79 @@ app.delete("/api/factories/:id", async (req, res) => {
 });
 
 
+// update
+app.put("/factories/:id", async (req, res) => {
+  try {
+    const { location, capacity } = req.body;
+    const { id } = req.params;
+
+    if (!location || !capacity) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    if (isNaN(capacity) || Number(capacity) <= 0) {
+      return res.status(400).json({ error: "Capacity must be a positive number" });
+    }
+
+    const result = await pool.query(
+      `UPDATE factory
+       SET location=$1, capacity=$2
+       WHERE factory_id=$3
+       RETURNING *`,
+      [location, Number(capacity), id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Factory not found" });
+    }
+
+    res.status(200).json({
+      message: "Factory updated",
+      data: result.rows[0],
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// delete
+app.delete("/factories/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      "DELETE FROM factory WHERE factory_id=$1 RETURNING *",
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Factory not found" });
+    }
+
+    res.status(200).json({
+      message: "Factory deleted successfully",
+      data: result.rows[0],
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 //EMPLOYESS 
 
 // CREATE
-app.post("/api/employees", async (req, res) => {
+app.post("/employees", async (req, res) => {
   try {
     const { name, role, factory_id } = req.body;
 
     if (!name || !role || !factory_id) {
       return res.status(400).json({ error: "All fields required" });
+    }
+
+    if (isNaN(factory_id)) {
+      return res.status(400).json({ error: "factory_id must be a number" });
     }
 
     // FK VALIDATION
@@ -353,20 +391,23 @@ app.post("/api/employees", async (req, res) => {
       `INSERT INTO employee (name, role, factory_id)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [name, role, factory_id]
+      [name.trim(), role.trim(), Number(factory_id)]
     );
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json({
+      message: "Employee added successfully",
+      data: result.rows[0],
+    });
 
   } catch (err) {
-    console.log(err);
+    console.log("EMPLOYEE CREATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 
 // READ ALL (JOIN with factory)
-app.get("/api/employees", async (req, res) => {
+app.get("/employees", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
@@ -383,26 +424,34 @@ app.get("/api/employees", async (req, res) => {
     res.status(200).json(result.rows);
 
   } catch (err) {
+    console.log("EMPLOYEE FETCH ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 
 // UPDATE
-app.put("/api/employees/:id", async (req, res) => {
+app.put("/employees/:id", async (req, res) => {
   try {
     const { name, role, factory_id } = req.body;
+    const { id } = req.params;
+
+    if (!name || !role || !factory_id) {
+      return res.status(400).json({ error: "All fields required" });
+    }
+
+    if (isNaN(factory_id)) {
+      return res.status(400).json({ error: "factory_id must be a number" });
+    }
 
     // FK VALIDATION
-    if (factory_id) {
-      const factoryCheck = await pool.query(
-        "SELECT * FROM factory WHERE factory_id = $1",
-        [factory_id]
-      );
+    const factoryCheck = await pool.query(
+      "SELECT * FROM factory WHERE factory_id = $1",
+      [factory_id]
+    );
 
-      if (factoryCheck.rows.length === 0) {
-        return res.status(400).json({ error: "Invalid factory_id" });
-      }
+    if (factoryCheck.rows.length === 0) {
+      return res.status(400).json({ error: "Invalid factory_id" });
     }
 
     const result = await pool.query(
@@ -410,44 +459,54 @@ app.put("/api/employees/:id", async (req, res) => {
        SET name=$1, role=$2, factory_id=$3
        WHERE employee_id=$4
        RETURNING *`,
-      [name, role, factory_id, req.params.id]
+      [name.trim(), role.trim(), Number(factory_id), id]
     );
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Employee not found" });
     }
 
-    res.status(200).json(result.rows[0]);
+    res.status(200).json({
+      message: "Employee updated successfully",
+      data: result.rows[0],
+    });
 
   } catch (err) {
+    console.log("EMPLOYEE UPDATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 
 // DELETE
-app.delete("/api/employees/:id", async (req, res) => {
+app.delete("/employees/:id", async (req, res) => {
   try {
+    const { id } = req.params;
+
     const result = await pool.query(
-      "DELETE FROM employee WHERE employee_id=$1",
-      [req.params.id]
+      "DELETE FROM employee WHERE employee_id=$1 RETURNING *",
+      [id]
     );
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Employee not found" });
     }
 
-    res.status(200).json({ message: "Employee deleted successfully" });
+    res.status(200).json({
+      message: "Employee deleted successfully",
+      data: result.rows[0],
+    });
 
   } catch (err) {
+    console.log("EMPLOYEE DELETE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-
 // DEALERS 
+
 // CREATE
-app.post("/api/dealers", async (req, res) => {
+app.post("/dealers", async (req, res) => {
   try {
     const { dealer_name, city, contact } = req.body;
 
@@ -459,20 +518,23 @@ app.post("/api/dealers", async (req, res) => {
       `INSERT INTO dealer (dealer_name, city, contact)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [dealer_name, city, contact]
+      [dealer_name.trim(), city.trim(), contact.trim()]
     );
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json({
+      message: "Dealer added successfully",
+      data: result.rows[0],
+    });
 
   } catch (err) {
-    console.log(err);
+    console.log("DEALER CREATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 
 // READ ALL
-app.get("/api/dealers", async (req, res) => {
+app.get("/dealers", async (req, res) => {
   try {
     const result = await pool.query(
       "SELECT * FROM dealer ORDER BY dealer_id"
@@ -481,62 +543,82 @@ app.get("/api/dealers", async (req, res) => {
     res.status(200).json(result.rows);
 
   } catch (err) {
+    console.log("DEALER FETCH ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 
 // UPDATE
-app.put("/api/dealers/:id", async (req, res) => {
+app.put("/dealers/:id", async (req, res) => {
   try {
     const { dealer_name, city, contact } = req.body;
+    const { id } = req.params;
+
+    if (!dealer_name || !city || !contact) {
+      return res.status(400).json({ error: "All fields required" });
+    }
 
     const result = await pool.query(
       `UPDATE dealer
        SET dealer_name=$1, city=$2, contact=$3
        WHERE dealer_id=$4
        RETURNING *`,
-      [dealer_name, city, contact, req.params.id]
+      [dealer_name.trim(), city.trim(), contact.trim(), id]
     );
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Dealer not found" });
     }
 
-    res.status(200).json(result.rows[0]);
+    res.status(200).json({
+      message: "Dealer updated successfully",
+      data: result.rows[0],
+    });
 
   } catch (err) {
+    console.log("DEALER UPDATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 
 // DELETE
-app.delete("/api/dealers/:id", async (req, res) => {
+app.delete("/dealers/:id", async (req, res) => {
   try {
+    const { id } = req.params;
+
     const result = await pool.query(
-      "DELETE FROM dealer WHERE dealer_id=$1",
-      [req.params.id]
+      "DELETE FROM dealer WHERE dealer_id=$1 RETURNING *",
+      [id]
     );
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Dealer not found" });
     }
 
-    res.status(200).json({ message: "Dealer deleted successfully" });
+    res.status(200).json({
+      message: "Dealer deleted successfully",
+      data: result.rows[0],
+    });
 
   } catch (err) {
+    console.log("DEALER DELETE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-
 // PRODUCTION
 
 // CREATE
-app.post("/api/production", async (req, res) => {
+app.post("/production", async (req, res) => {
   try {
-    const { factory_id, model_id, quantity, production_date } = req.body;
+    let { factory_id, model_id, quantity, production_date } = req.body;
+
+    // convert types (VERY IMPORTANT)
+    factory_id = Number(factory_id);
+    model_id = Number(model_id);
+    quantity = Number(quantity);
 
     // validation
     if (!factory_id || !model_id || !quantity || !production_date) {
@@ -555,7 +637,7 @@ app.post("/api/production", async (req, res) => {
 
     // check model
     const modelCheck = await pool.query(
-      "SELECT * FROM carmodel WHERE model_id = $1",
+      "SELECT model_id FROM carmodel WHERE model_id = $1",
       [model_id]
     );
 
@@ -581,17 +663,20 @@ app.post("/api/production", async (req, res) => {
       [factory_id, model_id, quantity, production_date]
     );
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json({
+      message: "Production record added",
+      data: result.rows[0],
+    });
 
   } catch (err) {
-    console.log(err);
+    console.log("PRODUCTION CREATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 
 // READ ALL (JOIN)
-app.get("/api/production", async (req, res) => {
+app.get("/production", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
@@ -611,17 +696,21 @@ app.get("/api/production", async (req, res) => {
     res.status(200).json(result.rows);
 
   } catch (err) {
+    console.log("PRODUCTION FETCH ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
-
-//SALES
+// SALES
 
 // CREATE
-app.post("/api/sales", async (req, res) => {
+app.post("/sales", async (req, res) => {
   try {
-    const { dealer_id, model_id, quantity, sale_date } = req.body;
+    let { dealer_id, model_id, quantity, sale_date } = req.body;
+
+   
+    dealer_id = Number(dealer_id);
+    model_id = Number(model_id);
+    quantity = Number(quantity);
 
     // validation
     if (!dealer_id || !model_id || !quantity || !sale_date) {
@@ -630,7 +719,7 @@ app.post("/api/sales", async (req, res) => {
 
     // check dealer
     const dealerCheck = await pool.query(
-      "SELECT * FROM dealer WHERE dealer_id = $1",
+      "SELECT dealer_id FROM dealer WHERE dealer_id = $1",
       [dealer_id]
     );
 
@@ -640,7 +729,7 @@ app.post("/api/sales", async (req, res) => {
 
     // check model
     const modelCheck = await pool.query(
-      "SELECT * FROM carmodel WHERE model_id = $1",
+      "SELECT model_id FROM carmodel WHERE model_id = $1",
       [model_id]
     );
 
@@ -656,17 +745,20 @@ app.post("/api/sales", async (req, res) => {
       [dealer_id, model_id, quantity, sale_date]
     );
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json({
+      message: "Sales record added",
+      data: result.rows[0],
+    });
 
   } catch (err) {
-    console.log(err);
+    console.log("SALES CREATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 
 // READ ALL (JOIN)
-app.get("/api/sales", async (req, res) => {
+app.get("/sales", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
@@ -686,32 +778,45 @@ app.get("/api/sales", async (req, res) => {
     res.status(200).json(result.rows);
 
   } catch (err) {
+    console.log("SALES FETCH ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-
-
 // USERS
-app.get("/api/users", async (req, res) => {
+
+// GET ALL USERS
+app.get("/users", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM users ORDER BY user_id");
-    res.json(result.rows);
+    const result = await pool.query(
+      "SELECT * FROM users ORDER BY user_id"
+    );
+
+    res.status(200).json(result.rows);
+
   } catch (err) {
-    console.error(err);
+    console.error("USERS FETCH ERROR:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
 
-app.post("/api/users", async (req, res) => {
-  const { email, password, role, phone_num, created_date } = req.body;
-
-  if (!email || !password || !role) {
-    return res.status(400).json({ error: "Email, password, role required" });
-  }
-const dateValue = created_date === "" ? null : created_date;
+// CREATE USER
+app.post("/users", async (req, res) => {
   try {
+    let { email, password, role, phone_num, created_date } = req.body;
+
+    if (!email || !password || !role) {
+      return res.status(400).json({ error: "Email, password, role required" });
+    }
+
+    // clean input
+    email = email.trim();
+    password = password.trim();
+    role = role.trim();
+
+    const dateValue = created_date === "" ? null : created_date;
+
     const result = await pool.query(
       `INSERT INTO users (email, password, role, phone_num, created_date)
        VALUES ($1, $2, $3, $4, $5)
@@ -719,9 +824,13 @@ const dateValue = created_date === "" ? null : created_date;
       [email, password, role, phone_num, dateValue]
     );
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json({
+      message: "User created successfully",
+      data: result.rows[0],
+    });
+
   } catch (err) {
-    console.error(err);
+    console.error("USER CREATE ERROR:", err);
 
     if (err.code === "23505") {
       return res.status(400).json({ error: "Email already exists" });
@@ -732,11 +841,21 @@ const dateValue = created_date === "" ? null : created_date;
 });
 
 
-app.put("/api/users/:id", async (req, res) => {
-  const { id } = req.params;
-  const { email, password, role, phone_num, created_date } = req.body;
-
+// UPDATE USER
+app.put("/users/:id", async (req, res) => {
   try {
+    const { id } = req.params;
+    let { email, password, role, phone_num, created_date } = req.body;
+
+    if (!email || !password || !role) {
+      return res.status(400).json({ error: "Email, password, role required" });
+    }
+
+    // clean input
+    email = email.trim();
+    password = password.trim();
+    role = role.trim();
+
     const result = await pool.query(
       `UPDATE users
        SET email=$1,
@@ -753,17 +872,23 @@ app.put("/api/users/:id", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json(result.rows[0]);
+    res.status(200).json({
+      message: "User updated successfully",
+      data: result.rows[0],
+    });
+
   } catch (err) {
-    console.error(err);
+    console.error("USER UPDATE ERROR:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-app.delete("/api/users/:id", async (req, res) => {
-  const { id } = req.params;
 
+// DELETE USER
+app.delete("/users/:id", async (req, res) => {
   try {
+    const { id } = req.params;
+
     const result = await pool.query(
       "DELETE FROM users WHERE user_id=$1 RETURNING *",
       [id]
@@ -773,9 +898,19 @@ app.delete("/api/users/:id", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json({ message: "User deleted successfully" });
+    res.status(200).json({
+      message: "User deleted successfully",
+      data: result.rows[0],
+    });
+
   } catch (err) {
-    console.error(err);
+    console.error("USER DELETE ERROR:", err);
     res.status(500).json({ error: "Server error" });
   }
+});
+
+
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
