@@ -28,10 +28,11 @@ const Suppliers = () => {
     if (edit_id) {
       await api.put(`/suppliers/${edit_id}`, form);
       setEdit_id(null);
-      setShowEform(false);
+     
     } else {
       await api.post("/suppliers", form);
     }
+      setShowEform(false);
 
     const res = await api.get("/suppliers");
     setSupplier(res.data);

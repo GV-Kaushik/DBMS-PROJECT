@@ -11,14 +11,14 @@ app.use(express.json());
 
 const SECRET = "secret";
 
-// Login 
+// Login
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const result = await pool.query(
       "SELECT * FROM users WHERE email=$1 AND password=$2",
-      [email, password]
+      [email, password],
     );
 
     if (result.rows.length === 0) {
@@ -27,19 +27,15 @@ app.post("/login", async (req, res) => {
 
     const user = result.rows[0];
 
-    const token = jwt.sign(
-      { id: user.user_id, role: user.role },
-      SECRET,
-      { expiresIn: "1d" }
-    );
+    const token = jwt.sign({ id: user.user_id, role: user.role }, SECRET, {
+      expiresIn: "1d",
+    });
 
     res.json({ token, role: user.role });
-
   } catch (err) {
     res.status(500).json(err.message);
   }
 });
-
 
 // auth middleware
 const auth = (req, res, next) => {
@@ -56,8 +52,6 @@ const auth = (req, res, next) => {
   }
 };
 
-
-
 app.get("/", (req, res) => {
   res.send("Server running 🚀");
 });
@@ -68,7 +62,6 @@ app.get("/dashboard", auth, (req, res) => {
     user: req.user,
   });
 });
-
 
 // cars page routes
 
@@ -82,7 +75,7 @@ app.post("/cars", auth, async (req, res) => {
 
   await pool.query(
     "INSERT INTO carmodel (model_name, company, price, engine_type) VALUES ($1,$2,$3,$4)",
-    [model_name, company, price, engine_type]
+    [model_name, company, price, engine_type],
   );
 
   res.json({ message: "Car added" });
@@ -94,7 +87,7 @@ app.put("/cars/:id", auth, async (req, res) => {
 
   await pool.query(
     "UPDATE carmodel SET model_name=$1, company=$2, price=$3, engine_type=$4 WHERE model_id=$5",
-    [model_name, company, price, engine_type, id]
+    [model_name, company, price, engine_type, id],
   );
 
   res.json({ message: "Car updated" });
@@ -108,7 +101,6 @@ app.delete("/cars/:id", auth, async (req, res) => {
   res.json({ message: "Car deleted" });
 });
 
-
 // parts page routes
 
 app.get("/parts", auth, async (req, res) => {
@@ -121,7 +113,7 @@ app.post("/parts", auth, async (req, res) => {
 
   await pool.query(
     "INSERT INTO part (part_name, category, cost, quantity) VALUES ($1,$2,$3,$4)",
-    [part_name, category, cost, quantity]
+    [part_name, category, cost, quantity],
   );
 
   res.json({ message: "Part added" });
@@ -133,7 +125,7 @@ app.put("/parts/:id", auth, async (req, res) => {
 
   await pool.query(
     "UPDATE part SET part_name=$1, category=$2, cost=$3, quantity=$4 WHERE part_id=$5",
-    [part_name, category, cost, quantity, id]
+    [part_name, category, cost, quantity, id],
   );
 
   res.json({ message: "Part updated" });
@@ -146,7 +138,6 @@ app.delete("/parts/:id", auth, async (req, res) => {
 
   res.json({ message: "Part deleted" });
 });
-
 
 // Assign parts page routes
 
@@ -162,15 +153,32 @@ app.get("/assign", auth, async (req, res) => {
   res.json(result.rows);
 });
 
-app.post("/assign", auth, async (req, res) => {
+app.post("/assign", async (req, res) => {
   const { model_id, part_id, quantity_required } = req.body;
 
-  await pool.query(
-    "INSERT INTO carmodel_parts (model_id, part_id, quantity_required) VALUES ($1,$2,$3)",
-    [model_id, part_id, quantity_required]
-  );
+  try {
+    const stock = await pool.query( // quantoty validation
+      "SELECT quantity FROM part WHERE part_id=$1",
+      [part_id],
+    );
 
-  res.json({ message: "Assigned successfully" });
+    if (stock.rows.length === 0) {
+      return res.status(404).json("Part not found");
+    }
+
+    if (quantity_required > stock.rows[0].quantity) {
+      return res.status(400).json("Not enough stock");
+    }
+
+    await pool.query(
+      "INSERT INTO carmodel_parts (model_id, part_id, quantity_required) VALUES ($1,$2,$3)",
+      [model_id, part_id, quantity_required],
+    );
+
+    res.json({ message: "Assigned successfully" });
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
 });
 
 app.delete("/assign/:id", auth, async (req, res) => {
@@ -188,7 +196,7 @@ app.delete("/assign/:id", auth, async (req, res) => {
 app.get("/suppliers", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM supplier ORDER BY supplier_id"
+      "SELECT * FROM supplier ORDER BY supplier_id",
     );
     res.json(result.rows);
   } catch (err) {
@@ -203,7 +211,7 @@ app.post("/suppliers", async (req, res) => {
   try {
     await pool.query(
       "INSERT INTO supplier (supplier_name, city, contact) VALUES ($1,$2,$3)",
-      [supplier_name, city, contact]
+      [supplier_name, city, contact],
     );
 
     res.json({ message: "Supplier added" });
@@ -217,10 +225,7 @@ app.delete("/suppliers/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
-    await pool.query(
-      "DELETE FROM supplier WHERE supplier_id=$1",
-      [id]
-    );
+    await pool.query("DELETE FROM supplier WHERE supplier_id=$1", [id]);
 
     res.json({ message: "Supplier deleted" });
   } catch (err) {
@@ -236,7 +241,7 @@ app.put("/suppliers/:id", async (req, res) => {
   try {
     await pool.query(
       "UPDATE supplier SET supplier_name=$1, city=$2, contact=$3 WHERE supplier_id=$4",
-      [supplier_name, city, contact, id]
+      [supplier_name, city, contact, id],
     );
 
     res.json({ message: "Supplier updated" });

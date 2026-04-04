@@ -30,20 +30,33 @@ const AssignParts = () => {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-
   const addAssign = async () => {
-    await api.post("/assign", form);
+    // quantity validation  (added in both frontend and backend for faster response)
+    try {
+      const selectedPart = parts.find((p) => p.part_id == form.part_id);
 
-    fetchData();
-    setshowAssiForm(false);
+      if (
+        !selectedPart ||
+        Number(form.quantity_required) > Number(selectedPart.quantity)
+      ) {
+        alert("Not enough stock available!");
+        return;
+      }
 
-    setForm({
-      model_id: "",
-      part_id: "",
-      quantity_required: "",
-    });
+      await api.post("/assign", form);
+
+      fetchData();
+      setshowAssiForm(false);
+
+      setForm({
+        model_id: "",
+        part_id: "",
+        quantity_required: "",
+      });
+    } catch (err) {
+      console.log(err);
+    }
   };
-
   const deleteAssign = async (id) => {
     await api.delete(`/assign/${id}`);
     fetchData();
@@ -52,7 +65,6 @@ const AssignParts = () => {
   return (
     <>
       <div className="p-6">
-
         <div className="flex justify-between mb-6">
           <h1 className="text-2xl font-bold">Assign Parts</h1>
 
@@ -93,7 +105,6 @@ const AssignParts = () => {
                 </tr>
               ))}
             </tbody>
-
           </table>
         </div>
       </div>
@@ -104,7 +115,12 @@ const AssignParts = () => {
           <div className="bg-white p-6 rounded-xl w-[400px]">
             <h2 className="font-bold mb-4">Assign Part</h2>
 
-            <select name="model_id" value={form.model_id} onChange={handleChange} className="border p-2 w-full mb-2">
+            <select
+              name="model_id"
+              value={form.model_id}
+              onChange={handleChange}
+              className="border p-2 w-full mb-2"
+            >
               <option value="">Select Car</option>
               {cars.map((c) => (
                 <option key={c.model_id} value={c.model_id}>
@@ -113,7 +129,12 @@ const AssignParts = () => {
               ))}
             </select>
 
-            <select name="part_id" value={form.part_id} onChange={handleChange} className="border p-2 w-full mb-2">
+            <select
+              name="part_id"
+              value={form.part_id}
+              onChange={handleChange}
+              className="border p-2 w-full mb-2"
+            >
               <option value="">Select Part</option>
               {parts.map((p) => (
                 <option key={p.part_id} value={p.part_id}>
@@ -122,11 +143,22 @@ const AssignParts = () => {
               ))}
             </select>
 
-            <input name="quantity_required" placeholder="Qunatity Required" value={form.quantity_required} onChange={handleChange} className="border p-2 w-full mb-4" />
+            <input
+              name="quantity_required"
+              placeholder="Qunatity Required"
+              value={form.quantity_required}
+              onChange={handleChange}
+              className="border p-2 w-full mb-4"
+            />
 
             <div className="flex justify-end gap-2">
               <button onClick={() => setshowAssiForm(false)}>Cancel</button>
-              <button onClick={addAssign} className="bg-blue-600 text-white px-3 py-1 rounded">Assign</button>
+              <button
+                onClick={addAssign}
+                className="bg-blue-600 text-white px-3 py-1 rounded"
+              >
+                Assign
+              </button>
             </div>
           </div>
         </div>

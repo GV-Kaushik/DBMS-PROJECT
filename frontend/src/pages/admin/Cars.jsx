@@ -30,10 +30,11 @@ const Cars = () => {
     if (edit_id) {
       await api.put(`/cars/${edit_id}`, form);
       setEdit_id(null);
-      setShowEform(false);
+     
     } else {
       await api.post("/cars", form);
     }
+      setShowEform(false);
 
     const res = await api.get("/cars");
     setCar(res.data);
