@@ -11,19 +11,15 @@ app.use(express.json());
 
 const SECRET = "secret";
 
-// ================= LOGIN =================
+// Login 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    console.log(email, password);
-
     const result = await pool.query(
       "SELECT * FROM users WHERE email=$1 AND password=$2",
-      [email, password],
+      [email, password]
     );
-
-    console.log(result.rows);
 
     if (result.rows.length === 0) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -31,18 +27,21 @@ app.post("/login", async (req, res) => {
 
     const user = result.rows[0];
 
-    const token = jwt.sign({ id: user.user_id, role: user.role }, SECRET, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign(
+      { id: user.user_id, role: user.role },
+      SECRET,
+      { expiresIn: "1d" }
+    );
 
     res.json({ token, role: user.role });
+
   } catch (err) {
-    console.log(err);
     res.status(500).json(err.message);
   }
 });
 
-// ================= AUTH MIDDLEWARE =================
+
+// auth middleware
 const auth = (req, res, next) => {
   const token = req.headers.authorization;
 
@@ -57,14 +56,12 @@ const auth = (req, res, next) => {
   }
 };
 
-// ================= TEST ROUTES =================
 
-// public
+
 app.get("/", (req, res) => {
   res.send("Server running 🚀");
 });
 
-// protected
 app.get("/dashboard", auth, (req, res) => {
   res.json({
     message: "Welcome",
@@ -72,175 +69,118 @@ app.get("/dashboard", auth, (req, res) => {
   });
 });
 
-// Car Models page routes
 
-app.get("/cars", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM carmodel ORDER BY model_id");
-    res.json(result.rows);
-  } catch (error) {
-    res.status(500).json(error.message);
-  }
+// cars page routes
+
+app.get("/cars", auth, async (req, res) => {
+  const result = await pool.query("SELECT * FROM carmodel ORDER BY model_id");
+  res.json(result.rows);
 });
-app.post("/cars", async (req, res) => {
- 
 
+app.post("/cars", auth, async (req, res) => {
   const { model_name, company, price, engine_type } = req.body;
-  try {
-    const result = await pool.query(
-      "INSERT INTO carmodel (model_name, company, price, engine_type) VALUES ($1,$2,$3,$4)",
-      [model_name, company, price, engine_type],
-    );
 
-    res.json({ message: "New Car  is added" });
-  } catch (error) {
-    res.status(500).json(error.message);
-  }
-});
-// DELETE CAR
-app.delete("/cars/:id", async (req, res) => {
-  const { id } = req.params;
+  await pool.query(
+    "INSERT INTO carmodel (model_name, company, price, engine_type) VALUES ($1,$2,$3,$4)",
+    [model_name, company, price, engine_type]
+  );
 
-  try {
-    await pool.query("DELETE FROM carmodel WHERE model_id=$1", [id]);
-
-    res.json({ message: "Car deleted" });
-  } catch (err) {
-    res.status(500).json(err.message);
-  }
+  res.json({ message: "Car added" });
 });
 
-// UPDATE CAR
-app.put("/cars/:id", async (req, res) => {
+app.put("/cars/:id", auth, async (req, res) => {
   const { id } = req.params;
   const { model_name, company, price, engine_type } = req.body;
 
-  try {
-    await pool.query(
-      "UPDATE carmodel SET model_name=$1, company=$2, price=$3, engine_type=$4 WHERE model_id=$5",
-      [model_name, company, price, engine_type, id],
-    );
+  await pool.query(
+    "UPDATE carmodel SET model_name=$1, company=$2, price=$3, engine_type=$4 WHERE model_id=$5",
+    [model_name, company, price, engine_type, id]
+  );
 
-    res.json({ message: "Car  data updated" });
-  } catch (err) {
-    res.status(500).json(err.message);
-  }
+  res.json({ message: "Car updated" });
 });
 
-// Parts page Routes
-
-
-// GET ALL PARTS
-app.get("/parts", async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT * FROM part ORDER BY part_id"
-    );
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json(err.message);
-  }
-});
-
-// ADD PART
-app.post("/parts", async (req, res) => {
-  const { part_name, category, cost, quantity } = req.body;
-
-  try {
-    await pool.query(
-      "INSERT INTO part (part_name, category, cost, quantity) VALUES ($1,$2,$3,$4)",
-      [part_name, category, cost, quantity]
-    );
-
-    res.json({ message: "Part added" });
-  } catch (err) {
-    res.status(500).json(err.message);
-  }
-});
-
-// DELETE PART
-app.delete("/parts/:id", async (req, res) => {
+app.delete("/cars/:id", auth, async (req, res) => {
   const { id } = req.params;
 
-  try {
-    await pool.query(
-      "DELETE FROM part WHERE part_id=$1",
-      [id]
-    );
+  await pool.query("DELETE FROM carmodel WHERE model_id=$1", [id]);
 
-    res.json({ message: "Part deleted" });
-  } catch (err) {
-    res.status(500).json(err.message);
-  }
+  res.json({ message: "Car deleted" });
 });
 
-// UPDATE PART
-app.put("/parts/:id", async (req, res) => {
+
+// parts page routes
+
+app.get("/parts", auth, async (req, res) => {
+  const result = await pool.query("SELECT * FROM part ORDER BY part_id");
+  res.json(result.rows);
+});
+
+app.post("/parts", auth, async (req, res) => {
+  const { part_name, category, cost, quantity } = req.body;
+
+  await pool.query(
+    "INSERT INTO part (part_name, category, cost, quantity) VALUES ($1,$2,$3,$4)",
+    [part_name, category, cost, quantity]
+  );
+
+  res.json({ message: "Part added" });
+});
+
+app.put("/parts/:id", auth, async (req, res) => {
   const { id } = req.params;
   const { part_name, category, cost, quantity } = req.body;
 
-  try {
-    await pool.query(
-      "UPDATE part SET part_name=$1, category=$2, cost=$3, quantity=$4 WHERE part_id=$5",
-      [part_name, category, cost, quantity, id]
-    );
+  await pool.query(
+    "UPDATE part SET part_name=$1, category=$2, cost=$3, quantity=$4 WHERE part_id=$5",
+    [part_name, category, cost, quantity, id]
+  );
 
-    res.json({ message: "Part updated" });
-  } catch (err) {
-    res.status(500).json(err.message);
-  }
+  res.json({ message: "Part updated" });
+});
+
+app.delete("/parts/:id", auth, async (req, res) => {
+  const { id } = req.params;
+
+  await pool.query("DELETE FROM part WHERE part_id=$1", [id]);
+
+  res.json({ message: "Part deleted" });
+});
+
+
+// Assign parts page routes
+
+app.get("/assign", auth, async (req, res) => {
+  const result = await pool.query(`
+    SELECT cp.id, c.model_name, p.part_name, cp.quantity_required
+    FROM carmodel_parts cp
+    JOIN carmodel c ON cp.model_id = c.model_id
+    JOIN part p ON cp.part_id = p.part_id
+    ORDER BY cp.id
+  `);
+
+  res.json(result.rows);
+});
+
+app.post("/assign", auth, async (req, res) => {
+  const { model_id, part_id, quantity_required } = req.body;
+
+  await pool.query(
+    "INSERT INTO carmodel_parts (model_id, part_id, quantity_required) VALUES ($1,$2,$3)",
+    [model_id, part_id, quantity_required]
+  );
+
+  res.json({ message: "Assigned successfully" });
+});
+
+app.delete("/assign/:id", auth, async (req, res) => {
+  const { id } = req.params;
+
+  await pool.query("DELETE FROM carmodel_parts WHERE id=$1", [id]);
+
+  res.json({ message: "Removed" });
 });
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
-});
-
-// Assign Parts Page routes 
-
-// ================= ASSIGN PARTS =================
-
-// GET
-app.get("/assign", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT cp.id, c.model_name, p.part_name, cp.quantity_required
-      FROM carmodel_parts cp
-      JOIN carmodel c ON cp.model_id = c.model_id
-      JOIN part p ON cp.part_id = p.part_id
-      ORDER BY cp.id
-    `);
-
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json(err.message);
-  }
-});
-
-// POST
-app.post("/assign", async (req, res) => {
-  const { model_id, part_id, quantity_required } = req.body;
-
-  try {
-    await pool.query(
-      "INSERT INTO carmodel_parts (model_id, part_id, quantity_required) VALUES ($1,$2,$3)",
-      [model_id, part_id, quantity_required]
-    );
-
-    res.json({ message: "Assigned successfully" });
-  } catch (err) {
-    res.status(500).json(err.message);
-  }
-});
-
-// DELETE
-app.delete("/assign/:id", async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    await pool.query("DELETE FROM carmodel_parts WHERE id=$1", [id]);
-
-    res.json({ message: "Removed" });
-  } catch (err) {
-    res.status(500).json(err.message);
-  }
 });

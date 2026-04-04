@@ -1,5 +1,5 @@
-import { useState,useEffect  } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
+import api from "../../api";
 
 const Parts = () => {
   const [form, setForm] = useState({
@@ -13,11 +13,14 @@ const Parts = () => {
   const [edit_id, setEdit_id] = useState(null);
   const [showEform, setShowEform] = useState(false);
 
+  const [search, setSearch] = useState("");
+
   useEffect(() => {
-  axios.get("http://localhost:3000/parts")
-    .then(res => setPart(res.data))
-    .catch(err => console.log(err));
-}, []);
+    api
+      .get("/parts")
+      .then((res) => setPart(res.data))
+      .catch((err) => console.log(err));
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -25,15 +28,15 @@ const Parts = () => {
 
   const addPart = async () => {
     if (edit_id) {
-      await axios.put(`http://localhost:3000/parts/${edit_id}`, form);
+      await api.put(`/parts/${edit_id}`, form);
       setEdit_id(null);
       setShowEform(false);
     } else {
-     await axios.post("http://localhost:3000/parts", form);
+      await api.post("/parts", form);
     }
-     const res = await axios.get("http://localhost:3000/parts");
-    setPart(res.data);
 
+    const res = await api.get("/parts");
+    setPart(res.data);
 
     setForm({
       part_name: "",
@@ -43,152 +46,128 @@ const Parts = () => {
     });
   };
 
- 
-    const deletePart = async (id) => {
-  try {
-    await axios.delete(`http://localhost:3000/parts/${id}`);
-
-    const res = await axios.get("http://localhost:3000/parts");
+  const deletePart = async (id) => {
+    await api.delete(`/parts/${id}`);
+    const res = await api.get("/parts");
     setPart(res.data);
-  } catch (err) {
-    console.log(err);
-  }
-};
- 
+  };
+
+  const filteredParts = part.filter(
+    (p) =>
+      p.part_name.toLowerCase().includes(search.toLowerCase()) ||
+      p.category.toLowerCase().includes(search.toLowerCase()),
+  );
+
   return (
     <>
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">PARTS</h1>
-
-        {/* Add Part FORM */}
-        <div className="bg-white p-4 rounded shadow mb-6 flex gap-2 flex-wrap">
-          <input
-            name="part_name"
-            value={form.part_name}
-            onChange={handleChange}
-            placeholder="Part Name"
-            className="border p-2 rounded"
-          />
-          <input
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            placeholder="Category"
-            className="border p-2 rounded"
-          />
-          <input
-            name="cost"
-            value={form.cost}
-            onChange={handleChange}
-            placeholder="Cost(For Each Part)"
-            className="border p-2 rounded"
-          />
-          <input
-            name="quantity"
-            value={form.quantity}
-            onChange={handleChange}
-            placeholder="Quantity"
-            className="border p-2 rounded"
-          />
+        <div className="flex justify-between mb-6">
+          <h1 className="text-2xl font-bold">Parts</h1>
 
           <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-            onClick={addPart}
+            onClick={() => setShowEform(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded"
           >
-            Add Part
+            + Add Part
           </button>
         </div>
 
-        {/* Display Part details */}
-        <table className="w-full bg-white shadow rounded overflow-hidden">
-          <thead>
-            <tr className="bg-gray-200 text-left">
-              <th className="p-2">Part</th>
-              <th className="p-2">Category</th>
-              <th className="p-2">Cost(For Each Part)</th>
-              <th className="p-2">Quantity</th>
-              <th className="p-2">Actions</th>
-            </tr>
-          </thead>
+        {/* SEARCH BAR */}
+        <input
+          type="text"
+          placeholder="Search by part or category..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border p-2 rounded w-full mb-4"
+        />
 
-          <tbody>
-            {part.map((p) => (
-              <tr
-                key={p.part_id}
-                className="border-t hover:bg-gray-50 text-center"
-              >
-                <td className="p-2">{p.part_name}</td>
-                <td className="p-2">{p.category}</td>
-                <td className="p-2">{p.cost}</td>
-                <td className="p-2">{p.quantity}</td>
-
-                <td className="p-2">
-                  <button
-                    onClick={() => {
-                      setForm(p);
-                      setEdit_id(p.part_id);
-                      setShowEform(true);
-                    }}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded mr-2"
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    onClick={() => deletePart(p.part_id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
-                  >
-                    Delete
-                  </button>
-                </td>
+        <div className="bg-white rounded-xl shadow overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100 text-xs uppercase">
+              <tr>
+                <th className="p-3 text-left">Part</th>
+                <th className="p-3 text-left">Category</th>
+                <th className="p-3 text-left">Cost</th>
+                <th className="p-3 text-left">Qty</th>
+                <th className="p-3 text-center">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {filteredParts.map((p) => (
+                <tr key={p.part_id} className="border-t hover:bg-gray-50">
+                  <td className="p-3">{p.part_name}</td>
+                  <td>{p.category}</td>
+                  <td className="text-green-600">₹{p.cost}</td>
+                  <td>{p.quantity}</td>
+
+                  <td className="flex justify-center gap-2 p-2">
+                    <button
+                      onClick={() => {
+                        setForm(p);
+                        setEdit_id(p.part_id);
+                        setShowEform(true);
+                      }}
+                      className="bg-yellow-500 text-white px-3 py-1 rounded text-xs"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => deletePart(p.part_id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded text-xs"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Edit form */}
       {showEform && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded w-[400px] shadow-lg">
-            <h2 className="text-lg font-bold mb-4">Edit Part</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-xl w-[400px]">
+            <h2 className="font-bold mb-4">
+              {edit_id ? "Edit Part" : "Add Part"}
+            </h2>
 
             <input
               name="part_name"
+              placeholder="Part Name"
               value={form.part_name}
               onChange={handleChange}
-              className="border p-2 w-full mb-2 rounded"
+              className="border p-2 w-full mb-2"
             />
             <input
               name="category"
+              placeholder="Category"
               value={form.category}
               onChange={handleChange}
-              className="border p-2 w-full mb-2 rounded"
+              className="border p-2 w-full mb-2"
             />
             <input
               name="cost"
+              placeholder="Cost(For Each Part)"
               value={form.cost}
               onChange={handleChange}
-              className="border p-2 w-full mb-2 rounded"
+              className="border p-2 w-full mb-2"
             />
             <input
               name="quantity"
+              placeholder="Quantity"
               value={form.quantity}
               onChange={handleChange}
-              className="border p-2 w-full mb-4 rounded"
+              className="border p-2 w-full mb-4"
             />
 
             <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowEform(false)}
-                className="bg-gray-300 px-3 py-1 rounded"
-              >
-                Cancel
-              </button>
-
+              <button onClick={() => setShowEform(false)}>Cancel</button>
               <button
                 onClick={addPart}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                className="bg-blue-600 text-white px-3 py-1 rounded"
               >
                 Save
               </button>
