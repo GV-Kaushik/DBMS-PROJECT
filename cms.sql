@@ -3,6 +3,8 @@ CREATE TABLE users (
   email VARCHAR(100) UNIQUE NOT NULL,
   password TEXT NOT NULL,
   role VARCHAR(50) NOT NULL
+  phone_num VARCHAR,
+  created_date DATETIME,
 );
 CREATE TABLE carmodel (
   model_id SERIAL PRIMARY KEY,

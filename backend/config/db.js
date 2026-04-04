@@ -4,8 +4,8 @@ const {Pool} =pg;
 const pool= new Pool({
     user:"postgres",
     host:"localhost",
-    database:"Car",
-    password:"1616",
+    database:"cms",
+    password:"1234",
     port:5432
 });
 
