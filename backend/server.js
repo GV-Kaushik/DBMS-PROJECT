@@ -181,6 +181,70 @@ app.delete("/assign/:id", auth, async (req, res) => {
   res.json({ message: "Removed" });
 });
 
+// Suppliers page routes
+// ================= SUPPLIERS =================
+
+// GET ALL SUPPLIERS
+app.get("/suppliers", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM supplier ORDER BY supplier_id"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
+
+// ADD SUPPLIER
+app.post("/suppliers", async (req, res) => {
+  const { supplier_name, city, contact } = req.body;
+
+  try {
+    await pool.query(
+      "INSERT INTO supplier (supplier_name, city, contact) VALUES ($1,$2,$3)",
+      [supplier_name, city, contact]
+    );
+
+    res.json({ message: "Supplier added" });
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
+
+// DELETE SUPPLIER
+app.delete("/suppliers/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query(
+      "DELETE FROM supplier WHERE supplier_id=$1",
+      [id]
+    );
+
+    res.json({ message: "Supplier deleted" });
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
+
+// UPDATE SUPPLIER
+app.put("/suppliers/:id", async (req, res) => {
+  const { id } = req.params;
+  const { supplier_name, city, contact } = req.body;
+
+  try {
+    await pool.query(
+      "UPDATE supplier SET supplier_name=$1, city=$2, contact=$3 WHERE supplier_id=$4",
+      [supplier_name, city, contact, id]
+    );
+
+    res.json({ message: "Supplier updated" });
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
