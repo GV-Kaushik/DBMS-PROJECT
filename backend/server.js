@@ -157,7 +157,8 @@ app.post("/assign", async (req, res) => {
   const { model_id, part_id, quantity_required } = req.body;
 
   try {
-    const stock = await pool.query( // quantoty validation
+    const stock = await pool.query(
+      // quantoty validation
       "SELECT quantity FROM part WHERE part_id=$1",
       [part_id],
     );
@@ -190,7 +191,7 @@ app.delete("/assign/:id", auth, async (req, res) => {
 });
 
 // Suppliers page routes
-// ================= SUPPLIERS =================
+
 
 // GET ALL SUPPLIERS
 app.get("/suppliers", async (req, res) => {
@@ -250,8 +251,103 @@ app.put("/suppliers/:id", async (req, res) => {
   }
 });
 
+// supply recors page routes
 
+// GET ALL SUPPLY RECORDS
+app.get("/part-supply", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        ps.supply_id,
+        ps.supplier_id,
+        ps.part_id,
+        s.supplier_name,
+        p.part_name,
+        ps.quantity
+      FROM part_supply ps
+      JOIN supplier s ON ps.supplier_id = s.supplier_id
+      JOIN part p ON ps.part_id = p.part_id
+      ORDER BY ps.supply_id
+    `);
 
+    res.json(result.rows);
+  } catch (err) {
+    console.log("SUPPLY FETCH ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ADD SUPPLY RECORD
+app.post("/part-supply", async (req, res) => {
+  try {
+    let { supplier_id, part_id, quantity } = req.body;
+
+    supplier_id = Number(supplier_id);
+    part_id = Number(part_id);
+    quantity = Number(quantity);
+
+    if (!supplier_id || !part_id || !quantity) {
+      return res.status(400).json({ error: "All fields required" });
+    }
+
+    // check supplier
+    const sCheck = await pool.query(
+      "SELECT * FROM supplier WHERE supplier_id=$1",
+      [supplier_id],
+    );
+
+    if (sCheck.rows.length === 0) {
+      return res.status(400).json({ error: "Invalid supplier_id" });
+    }
+
+    // check part
+    const pCheck = await pool.query(
+      "SELECT quantity FROM part WHERE part_id=$1",
+      [part_id],
+    );
+
+    if (pCheck.rows.length === 0) {
+      return res.status(400).json({ error: "Invalid part_id" });
+    }
+    if (quantity > pCheck.rows[0].quantity) {
+      return res.status(400).json({ error: "Not enough stock available" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO part_supply (supplier_id, part_id, quantity)
+       VALUES ($1,$2,$3)
+       RETURNING *`,
+      [supplier_id, part_id, quantity],
+    );
+
+    res.status(201).json({
+      message: "Supply record added",
+      data: result.rows[0],
+    });
+  } catch (err) {
+    console.log("SUPPLY CREATE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE
+app.delete("/part-supply/:id", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "DELETE FROM part_supply WHERE supply_id=$1 RETURNING *",
+      [req.params.id],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Record not found" });
+    }
+
+    res.json({ message: "Deleted successfully" });
+  } catch (err) {
+    console.log("SUPPLY DELETE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 //FACTORY ROUTES--------------------------------------->
 
@@ -265,42 +361,40 @@ app.post("/factories", async (req, res) => {
     }
 
     if (isNaN(capacity) || Number(capacity) <= 0) {
-      return res.status(400).json({ error: "Capacity must be a positive number" });
+      return res
+        .status(400)
+        .json({ error: "Capacity must be a positive number" });
     }
 
     const result = await pool.query(
       `INSERT INTO factory (location, capacity)
        VALUES ($1,$2)
        RETURNING *`,
-      [location, Number(capacity)]
+      [location, Number(capacity)],
     );
 
     res.status(201).json({
       message: "Factory data added",
       data: result.rows[0],
     });
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-
 // read all
 app.get("/factories", async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT * FROM factory ORDER BY factory_id`
+      `SELECT * FROM factory ORDER BY factory_id`,
     );
 
     res.status(200).json(result.rows);
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // update
 app.put("/factories/:id", async (req, res) => {
@@ -313,7 +407,9 @@ app.put("/factories/:id", async (req, res) => {
     }
 
     if (isNaN(capacity) || Number(capacity) <= 0) {
-      return res.status(400).json({ error: "Capacity must be a positive number" });
+      return res
+        .status(400)
+        .json({ error: "Capacity must be a positive number" });
     }
 
     const result = await pool.query(
@@ -321,7 +417,7 @@ app.put("/factories/:id", async (req, res) => {
        SET location=$1, capacity=$2
        WHERE factory_id=$3
        RETURNING *`,
-      [location, Number(capacity), id]
+      [location, Number(capacity), id],
     );
 
     if (result.rowCount === 0) {
@@ -332,12 +428,10 @@ app.put("/factories/:id", async (req, res) => {
       message: "Factory updated",
       data: result.rows[0],
     });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // delete
 app.delete("/factories/:id", async (req, res) => {
@@ -346,7 +440,7 @@ app.delete("/factories/:id", async (req, res) => {
 
     const result = await pool.query(
       "DELETE FROM factory WHERE factory_id=$1 RETURNING *",
-      [id]
+      [id],
     );
 
     if (result.rowCount === 0) {
@@ -357,12 +451,11 @@ app.delete("/factories/:id", async (req, res) => {
       message: "Factory deleted successfully",
       data: result.rows[0],
     });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-//EMPLOYESS 
+//EMPLOYESS
 
 // CREATE
 app.post("/employees", async (req, res) => {
@@ -380,7 +473,7 @@ app.post("/employees", async (req, res) => {
     // FK VALIDATION
     const factoryCheck = await pool.query(
       "SELECT * FROM factory WHERE factory_id = $1",
-      [factory_id]
+      [factory_id],
     );
 
     if (factoryCheck.rows.length === 0) {
@@ -391,20 +484,18 @@ app.post("/employees", async (req, res) => {
       `INSERT INTO employee (name, role, factory_id)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [name.trim(), role.trim(), Number(factory_id)]
+      [name.trim(), role.trim(), Number(factory_id)],
     );
 
     res.status(201).json({
       message: "Employee added successfully",
       data: result.rows[0],
     });
-
   } catch (err) {
     console.log("EMPLOYEE CREATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // READ ALL (JOIN with factory)
 app.get("/employees", async (req, res) => {
@@ -418,17 +509,15 @@ app.get("/employees", async (req, res) => {
           f.location AS factory_location
        FROM employee e
        JOIN factory f ON e.factory_id = f.factory_id
-       ORDER BY e.employee_id`
+       ORDER BY e.employee_id`,
     );
 
     res.status(200).json(result.rows);
-
   } catch (err) {
     console.log("EMPLOYEE FETCH ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // UPDATE
 app.put("/employees/:id", async (req, res) => {
@@ -447,7 +536,7 @@ app.put("/employees/:id", async (req, res) => {
     // FK VALIDATION
     const factoryCheck = await pool.query(
       "SELECT * FROM factory WHERE factory_id = $1",
-      [factory_id]
+      [factory_id],
     );
 
     if (factoryCheck.rows.length === 0) {
@@ -459,7 +548,7 @@ app.put("/employees/:id", async (req, res) => {
        SET name=$1, role=$2, factory_id=$3
        WHERE employee_id=$4
        RETURNING *`,
-      [name.trim(), role.trim(), Number(factory_id), id]
+      [name.trim(), role.trim(), Number(factory_id), id],
     );
 
     if (result.rowCount === 0) {
@@ -470,13 +559,11 @@ app.put("/employees/:id", async (req, res) => {
       message: "Employee updated successfully",
       data: result.rows[0],
     });
-
   } catch (err) {
     console.log("EMPLOYEE UPDATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // DELETE
 app.delete("/employees/:id", async (req, res) => {
@@ -485,7 +572,7 @@ app.delete("/employees/:id", async (req, res) => {
 
     const result = await pool.query(
       "DELETE FROM employee WHERE employee_id=$1 RETURNING *",
-      [id]
+      [id],
     );
 
     if (result.rowCount === 0) {
@@ -496,14 +583,13 @@ app.delete("/employees/:id", async (req, res) => {
       message: "Employee deleted successfully",
       data: result.rows[0],
     });
-
   } catch (err) {
     console.log("EMPLOYEE DELETE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// DEALERS 
+// DEALERS
 
 // CREATE
 app.post("/dealers", async (req, res) => {
@@ -518,36 +604,30 @@ app.post("/dealers", async (req, res) => {
       `INSERT INTO dealer (dealer_name, city, contact)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [dealer_name.trim(), city.trim(), contact.trim()]
+      [dealer_name.trim(), city.trim(), contact.trim()],
     );
 
     res.status(201).json({
       message: "Dealer added successfully",
       data: result.rows[0],
     });
-
   } catch (err) {
     console.log("DEALER CREATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-
 // READ ALL
 app.get("/dealers", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM dealer ORDER BY dealer_id"
-    );
+    const result = await pool.query("SELECT * FROM dealer ORDER BY dealer_id");
 
     res.status(200).json(result.rows);
-
   } catch (err) {
     console.log("DEALER FETCH ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // UPDATE
 app.put("/dealers/:id", async (req, res) => {
@@ -564,7 +644,7 @@ app.put("/dealers/:id", async (req, res) => {
        SET dealer_name=$1, city=$2, contact=$3
        WHERE dealer_id=$4
        RETURNING *`,
-      [dealer_name.trim(), city.trim(), contact.trim(), id]
+      [dealer_name.trim(), city.trim(), contact.trim(), id],
     );
 
     if (result.rowCount === 0) {
@@ -575,13 +655,11 @@ app.put("/dealers/:id", async (req, res) => {
       message: "Dealer updated successfully",
       data: result.rows[0],
     });
-
   } catch (err) {
     console.log("DEALER UPDATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // DELETE
 app.delete("/dealers/:id", async (req, res) => {
@@ -590,7 +668,7 @@ app.delete("/dealers/:id", async (req, res) => {
 
     const result = await pool.query(
       "DELETE FROM dealer WHERE dealer_id=$1 RETURNING *",
-      [id]
+      [id],
     );
 
     if (result.rowCount === 0) {
@@ -601,7 +679,6 @@ app.delete("/dealers/:id", async (req, res) => {
       message: "Dealer deleted successfully",
       data: result.rows[0],
     });
-
   } catch (err) {
     console.log("DEALER DELETE ERROR:", err);
     res.status(500).json({ error: err.message });
@@ -628,7 +705,7 @@ app.post("/production", async (req, res) => {
     // check factory
     const factoryCheck = await pool.query(
       "SELECT capacity FROM factory WHERE factory_id = $1",
-      [factory_id]
+      [factory_id],
     );
 
     if (factoryCheck.rows.length === 0) {
@@ -638,7 +715,7 @@ app.post("/production", async (req, res) => {
     // check model
     const modelCheck = await pool.query(
       "SELECT model_id FROM carmodel WHERE model_id = $1",
-      [model_id]
+      [model_id],
     );
 
     if (modelCheck.rows.length === 0) {
@@ -660,20 +737,18 @@ app.post("/production", async (req, res) => {
        (factory_id, model_id, quantity, production_date)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [factory_id, model_id, quantity, production_date]
+      [factory_id, model_id, quantity, production_date],
     );
 
     res.status(201).json({
       message: "Production record added",
       data: result.rows[0],
     });
-
   } catch (err) {
     console.log("PRODUCTION CREATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // READ ALL (JOIN)
 app.get("/production", async (req, res) => {
@@ -690,11 +765,10 @@ app.get("/production", async (req, res) => {
        FROM production_record pr
        JOIN factory f ON pr.factory_id = f.factory_id
        JOIN carmodel cm ON pr.model_id = cm.model_id
-       ORDER BY pr.production_id`
+       ORDER BY pr.production_id`,
     );
 
     res.status(200).json(result.rows);
-
   } catch (err) {
     console.log("PRODUCTION FETCH ERROR:", err);
     res.status(500).json({ error: err.message });
@@ -707,7 +781,6 @@ app.post("/sales", async (req, res) => {
   try {
     let { dealer_id, model_id, quantity, sale_date } = req.body;
 
-   
     dealer_id = Number(dealer_id);
     model_id = Number(model_id);
     quantity = Number(quantity);
@@ -720,7 +793,7 @@ app.post("/sales", async (req, res) => {
     // check dealer
     const dealerCheck = await pool.query(
       "SELECT dealer_id FROM dealer WHERE dealer_id = $1",
-      [dealer_id]
+      [dealer_id],
     );
 
     if (dealerCheck.rows.length === 0) {
@@ -730,7 +803,7 @@ app.post("/sales", async (req, res) => {
     // check model
     const modelCheck = await pool.query(
       "SELECT model_id FROM carmodel WHERE model_id = $1",
-      [model_id]
+      [model_id],
     );
 
     if (modelCheck.rows.length === 0) {
@@ -742,20 +815,18 @@ app.post("/sales", async (req, res) => {
       `INSERT INTO sales (dealer_id, model_id, quantity, sale_date)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [dealer_id, model_id, quantity, sale_date]
+      [dealer_id, model_id, quantity, sale_date],
     );
 
     res.status(201).json({
       message: "Sales record added",
       data: result.rows[0],
     });
-
   } catch (err) {
     console.log("SALES CREATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // READ ALL (JOIN)
 app.get("/sales", async (req, res) => {
@@ -772,11 +843,10 @@ app.get("/sales", async (req, res) => {
        FROM sales s
        JOIN dealer d ON s.dealer_id = d.dealer_id
        JOIN carmodel cm ON s.model_id = cm.model_id
-       ORDER BY s.sale_id`
+       ORDER BY s.sale_id`,
     );
 
     res.status(200).json(result.rows);
-
   } catch (err) {
     console.log("SALES FETCH ERROR:", err);
     res.status(500).json({ error: err.message });
@@ -788,18 +858,14 @@ app.get("/sales", async (req, res) => {
 // GET ALL USERS
 app.get("/users", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM users ORDER BY user_id"
-    );
+    const result = await pool.query("SELECT * FROM users ORDER BY user_id");
 
     res.status(200).json(result.rows);
-
   } catch (err) {
     console.error("USERS FETCH ERROR:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
-
 
 // CREATE USER
 app.post("/users", async (req, res) => {
@@ -821,14 +887,13 @@ app.post("/users", async (req, res) => {
       `INSERT INTO users (email, password, role, phone_num, created_date)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [email, password, role, phone_num, dateValue]
+      [email, password, role, phone_num, dateValue],
     );
 
     res.status(201).json({
       message: "User created successfully",
       data: result.rows[0],
     });
-
   } catch (err) {
     console.error("USER CREATE ERROR:", err);
 
@@ -839,7 +904,6 @@ app.post("/users", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 
 // UPDATE USER
 app.put("/users/:id", async (req, res) => {
@@ -865,7 +929,7 @@ app.put("/users/:id", async (req, res) => {
            created_date=$5
        WHERE user_id=$6
        RETURNING *`,
-      [email, password, role, phone_num, created_date, id]
+      [email, password, role, phone_num, created_date, id],
     );
 
     if (result.rows.length === 0) {
@@ -876,13 +940,11 @@ app.put("/users/:id", async (req, res) => {
       message: "User updated successfully",
       data: result.rows[0],
     });
-
   } catch (err) {
     console.error("USER UPDATE ERROR:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
-
 
 // DELETE USER
 app.delete("/users/:id", async (req, res) => {
@@ -891,7 +953,7 @@ app.delete("/users/:id", async (req, res) => {
 
     const result = await pool.query(
       "DELETE FROM users WHERE user_id=$1 RETURNING *",
-      [id]
+      [id],
     );
 
     if (result.rows.length === 0) {
@@ -902,14 +964,11 @@ app.delete("/users/:id", async (req, res) => {
       message: "User deleted successfully",
       data: result.rows[0],
     });
-
   } catch (err) {
     console.error("USER DELETE ERROR:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
-
-
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
