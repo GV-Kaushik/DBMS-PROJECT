@@ -53,16 +53,31 @@ const auth = (req, res, next) => {
 };
 
 app.get("/", (req, res) => {
-  res.send("Server running 🚀");
+  res.send("Server running");
 });
+// Dashboard page routesd
 
-app.get("/dashboard", auth, (req, res) => {
-  res.json({
-    message: "Welcome",
-    user: req.user,
-  });
+app.get("/dashboard", auth, async (req, res) => {
+  try {
+    const cars = await pool.query("SELECT COUNT(*) FROM carmodel");
+    const factories = await pool.query("SELECT COUNT(*) FROM factory");
+    const employees = await pool.query("SELECT COUNT(*) FROM employee");
+    const sales = await pool.query("SELECT COUNT(*) FROM sales");
+    const users = await pool.query("SELECT COUNT(*) FROM users");
+
+    res.json({
+      cars: Number(cars.rows[0].count),
+      factories: Number(factories.rows[0].count),
+      employees: Number(employees.rows[0].count),
+      sales: Number(sales.rows[0].count),
+      users: Number(users.rows[0].count),
+    });
+
+  } catch (err) {
+    console.log("DASHBOARD ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
-
 // cars page routes
 
 app.get("/cars", auth, async (req, res) => {
