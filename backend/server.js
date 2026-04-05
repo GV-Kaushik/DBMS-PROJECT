@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import pool from "./config/db.js";
+import bcrypt from "bcrypt";
 
 const app = express();
 const port = 3000;
@@ -16,10 +17,9 @@ app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const result = await pool.query(
-      "SELECT * FROM users WHERE email=$1 AND password=$2",
-      [email, password],
-    );
+    const result = await pool.query("SELECT * FROM users WHERE email=$1", [
+      email,
+    ]);
 
     if (result.rows.length === 0) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -27,14 +27,23 @@ app.post("/login", async (req, res) => {
 
     const user = result.rows[0];
 
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
     const token = jwt.sign({ id: user.user_id, role: user.role }, SECRET, {
       expiresIn: "1d",
     });
 
     res.json({ token, role: user.role });
   } catch (err) {
-    res.status(500).json(err.message);
-  }
+  console.error("LOGIN ERROR FULL:", err);
+  res.status(500).json({ error: err.message });
+}s.status(500).json(err.message);
+  
 });
 
 // auth middleware
@@ -72,7 +81,6 @@ app.get("/dashboard", auth, async (req, res) => {
       sales: Number(sales.rows[0].count),
       users: Number(users.rows[0].count),
     });
-
   } catch (err) {
     console.log("DASHBOARD ERROR:", err);
     res.status(500).json({ error: err.message });
@@ -206,7 +214,6 @@ app.delete("/assign/:id", auth, async (req, res) => {
 });
 
 // Suppliers page routes
-
 
 // GET ALL SUPPLIERS
 app.get("/suppliers", async (req, res) => {
@@ -891,10 +898,10 @@ app.post("/users", async (req, res) => {
       return res.status(400).json({ error: "Email, password, role required" });
     }
 
-    // clean input
     email = email.trim();
     password = password.trim();
     role = role.trim();
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const dateValue = created_date === "" ? null : created_date;
 
@@ -902,16 +909,15 @@ app.post("/users", async (req, res) => {
       `INSERT INTO users (email, password, role, phone_num, created_date)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [email, password, role, phone_num, dateValue],
+      [email, hashedPassword, role, phone_num, dateValue]
     );
 
     res.status(201).json({
       message: "User created successfully",
       data: result.rows[0],
     });
-  } catch (err) {
-    console.error("USER CREATE ERROR:", err);
 
+  } catch (err) {
     if (err.code === "23505") {
       return res.status(400).json({ error: "Email already exists" });
     }
@@ -919,7 +925,6 @@ app.post("/users", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 // UPDATE USER
 app.put("/users/:id", async (req, res) => {
   try {

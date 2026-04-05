@@ -3,6 +3,7 @@ import api from "../../api";
 
 const Employees = () => {
   const [employees, setEmployees] = useState([]);
+  const [factories, setFactories] = useState([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -13,9 +14,11 @@ const Employees = () => {
   const [edit_id, setEdit_id] = useState(null);
   const [showEform, setShowEform] = useState(false);
   const [search, setSearch] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadEmployees();
+    loadFactories();
   }, []);
 
   const loadEmployees = async () => {
@@ -23,8 +26,15 @@ const Employees = () => {
     setEmployees(res.data);
   };
 
+  const loadFactories = async () => {
+    const res = await api.get("/factories");
+    setFactories(res.data);
+  };
+
   const handleChange = (e) => {
+    setError("");
     const { name, value } = e.target;
+
     setForm({
       ...form,
       [name]: name === "factory_id" ? Number(value) : value,
@@ -32,6 +42,14 @@ const Employees = () => {
   };
 
   const handleSubmit = async () => {
+    // REQUIRED VALIDATION
+    if (!form.name || !form.role || !form.factory_id) {
+      setError("All fields are required");
+      return;
+    }
+
+    setError("");
+
     if (edit_id) {
       await api.put(`/employees/${edit_id}`, form);
       setEdit_id(null);
@@ -56,12 +74,18 @@ const Employees = () => {
   return (
     <>
       <div className="p-6">
-        <div className="flex justify-between mb-6">
-          <h1 className="text-2xl font-bold">EMPLOYEES</h1>
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Employees</h1>
+            <p className="text-sm text-gray-500">
+              Manage employees and assign them to factories
+            </p>
+          </div>
 
           <button
             onClick={() => setShowEform(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow"
           >
             + Add Employee
           </button>
@@ -72,63 +96,127 @@ const Employees = () => {
           placeholder="Search employee..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border p-2 rounded w-full mb-4"
+          className="border p-2 rounded-lg w-full mb-4 focus:ring-2 focus:ring-blue-400"
         />
 
         {/* TABLE */}
-        <table className="w-full bg-white shadow rounded">
-          <thead className="bg-gray-100">
-            <tr>
-              <th>Name</th>
-              <th>Role</th>
-              <th>Factory</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filtered.map((e) => (
-              <tr key={e.employee_id} className="border-t text-center">
-                <td>{e.name}</td>
-                <td>{e.role}</td>
-                <td>{e.factory_location}</td>
-
-                <td>
-                  <button
-                    onClick={() => {
-                      setForm(e);
-                      setEdit_id(e.employee_id);
-                      setShowEform(true);
-                    }}
-                    className="bg-yellow-500 px-2 py-1 text-white mr-2"
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(e.employee_id)}
-                    className="bg-red-500 px-2 py-1 text-white"
-                  >
-                    Delete
-                  </button>
-                </td>
+        <div className="bg-white rounded-xl shadow overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+              <tr>
+                <th className="p-3 text-left">Name</th>
+                <th className="p-3 text-left">Role</th>
+                <th className="p-3 text-left">Factory</th>
+                <th className="p-3 text-center">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {filtered.map((e) => (
+                <tr key={e.employee_id} className="border-t hover:bg-gray-50">
+                  <td className="p-3 font-medium">{e.name}</td>
+                  <td className="text-gray-600">{e.role}</td>
+                  <td>{e.factory_location}</td>
+
+                  <td className="flex justify-center gap-2 p-2">
+                    <button
+                      onClick={() => {
+                        setForm({
+                          name: e.name,
+                          role: e.role,
+                          factory_id: e.factory_id,
+                        });
+                        setEdit_id(e.employee_id);
+                        setShowEform(true);
+                      }}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(e.employee_id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {filtered.length === 0 && (
+            <p className="text-center p-4 text-gray-500">No data found</p>
+          )}
+        </div>
       </div>
 
       {/* MODAL */}
       {showEform && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded w-[400px]">
-            <input name="name" value={form.name} onChange={handleChange} placeholder="Name" className="border p-2 w-full mb-2"/>
-            <input name="role" value={form.role} onChange={handleChange} placeholder="Role" className="border p-2 w-full mb-2"/>
-            <input name="factory_id" value={form.factory_id} onChange={handleChange} placeholder="Factory ID" className="border p-2 w-full mb-4"/>
+        <div
+          className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center"
+          onClick={() => setShowEform(false)}
+        >
+          <div
+            className="bg-white p-6 rounded-xl w-[400px] shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-4">
+              {edit_id ? "Edit Employee" : "Add Employee"}
+            </h2>
+
+            {error && (
+              <p className="text-red-500 text-sm mb-2 text-center">{error}</p>
+            )}
+
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Name"
+              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
+            />
+
+            <input
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+              placeholder="Role"
+              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
+            />
+
+            <select
+              name="factory_id"
+              value={form.factory_id}
+              onChange={handleChange}
+              className="border p-2 w-full mb-4 rounded focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="">Select Factory</option>
+              {factories.map((f) => (
+                <option key={f.factory_id} value={f.factory_id}>
+                  {f.location}
+                </option>
+              ))}
+            </select>
 
             <div className="flex justify-end gap-2">
-              <button onClick={()=>setShowEform(false)} className="bg-gray-300 px-3 py-1">Cancel</button>
-              <button onClick={handleSubmit} className="bg-blue-600 text-white px-3 py-1">Save</button>
+              <button
+                onClick={() => setShowEform(false)}
+                className="bg-gray-300 px-3 py-1 rounded"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleSubmit}
+                disabled={
+                  !form.name || !form.role || !form.factory_id
+                }
+                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
+              >
+                {edit_id ? "Update" : "Save"}
+              </button>
             </div>
           </div>
         </div>

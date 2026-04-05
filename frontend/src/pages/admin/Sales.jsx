@@ -16,6 +16,7 @@ const Sales = () => {
   const [edit_id, setEdit_id] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadData();
@@ -36,6 +37,7 @@ const Sales = () => {
   };
 
   const handleChange = (e) => {
+    setError("");
     const { name, value } = e.target;
 
     setForm({
@@ -48,6 +50,19 @@ const Sales = () => {
   };
 
   const handleSubmit = async () => {
+    // REQUIRED VALIDATION
+    if (!form.dealer_id || !form.model_id || !form.quantity || !form.sale_date) {
+      setError("All fields are required");
+      return;
+    }
+
+    if (Number(form.quantity) <= 0) {
+      setError("Quantity must be greater than 0");
+      return;
+    }
+
+    setError("");
+
     try {
       if (edit_id) {
         await api.put(`/sales/${edit_id}`, form);
@@ -84,12 +99,18 @@ const Sales = () => {
   return (
     <>
       <div className="p-6">
-        <div className="flex justify-between mb-6">
-          <h1 className="text-2xl font-bold">Sales Records</h1>
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Sales Records</h1>
+            <p className="text-sm text-gray-500">
+              Manage car sales and dealer transactions
+            </p>
+          </div>
 
           <button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow"
           >
             + Add Sale
           </button>
@@ -97,76 +118,91 @@ const Sales = () => {
 
         {/* SEARCH */}
         <input
-          placeholder="Search..."
+          placeholder="Search dealer or model..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border p-2 rounded w-full mb-4"
+          className="border p-2 rounded-lg w-full mb-4 focus:ring-2 focus:ring-blue-400"
         />
 
         {/* TABLE */}
-        <table className="w-full bg-white shadow rounded">
-          <thead className="bg-gray-100">
-            <tr>
-              <th>Dealer</th>
-              <th>Model</th>
-              <th>Qty</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filtered.map((s) => (
-              <tr key={s.sale_id} className="border-t text-center">
-                <td>{s.dealer_name}</td>
-                <td>{s.model_name}</td>
-                <td>{s.quantity}</td>
-                <td>{s.sale_date?.split("T")[0]}</td>
-
-                <td>
-                  <button
-                    onClick={() => {
-                      setForm({
-                        dealer_id: s.dealer_id,
-                        model_id: s.model_id,
-                        quantity: s.quantity,
-                        sale_date: s.sale_date?.split("T")[0],
-                      });
-                      setEdit_id(s.sale_id);
-                      setShowForm(true);
-                    }}
-                    className="bg-yellow-500 px-2 py-1 text-white mr-2"
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(s.sale_id)}
-                    className="bg-red-500 px-2 py-1 text-white"
-                  >
-                    Delete
-                  </button>
-                </td>
+        <div className="bg-white rounded-xl shadow overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+              <tr>
+                <th className="p-3 text-left">Dealer</th>
+                <th className="p-3 text-left">Model</th>
+                <th className="p-3 text-left">Qty</th>
+                <th className="p-3 text-left">Date</th>
+                <th className="p-3 text-center">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {filtered.map((s) => (
+                <tr key={s.sale_id} className="border-t hover:bg-gray-50">
+                  <td className="p-3 font-medium">{s.dealer_name}</td>
+                  <td className="text-gray-600">{s.model_name}</td>
+                  <td className="text-blue-600 font-semibold">{s.quantity}</td>
+                  <td>{s.sale_date?.split("T")[0]}</td>
+
+                  <td className="flex justify-center gap-2 p-2">
+                    <button
+                      onClick={() => {
+                        setForm({
+                          dealer_id: s.dealer_id,
+                          model_id: s.model_id,
+                          quantity: s.quantity,
+                          sale_date: s.sale_date?.split("T")[0],
+                        });
+                        setEdit_id(s.sale_id);
+                        setShowForm(true);
+                      }}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(s.sale_id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {filtered.length === 0 && (
+            <p className="text-center p-4 text-gray-500">No data found</p>
+          )}
+        </div>
       </div>
 
       {/* MODAL */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded w-[400px]">
-            <h2 className="font-bold mb-4">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center"
+          onClick={() => setShowForm(false)}
+        >
+          <div
+            className="bg-white p-6 rounded-xl w-[400px] shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-4">
               {edit_id ? "Edit Sale" : "Add Sale"}
             </h2>
 
-            {/* DEALER DROPDOWN */}
+            {error && (
+              <p className="text-red-500 text-sm mb-2 text-center">{error}</p>
+            )}
+
             <select
               name="dealer_id"
               value={form.dealer_id}
               onChange={handleChange}
-              className="border p-2 w-full mb-2"
+              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
             >
               <option value="">Select Dealer</option>
               {dealers.map((d) => (
@@ -176,12 +212,11 @@ const Sales = () => {
               ))}
             </select>
 
-            {/* MODEL DROPDOWN */}
             <select
               name="model_id"
               value={form.model_id}
               onChange={handleChange}
-              className="border p-2 w-full mb-2"
+              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
             >
               <option value="">Select Car Model</option>
               {cars.map((c) => (
@@ -193,10 +228,12 @@ const Sales = () => {
 
             <input
               name="quantity"
+              type="number"
+              min="1"
               placeholder="Quantity"
               value={form.quantity}
               onChange={handleChange}
-              className="border p-2 w-full mb-2"
+              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
             />
 
             <input
@@ -204,22 +241,29 @@ const Sales = () => {
               name="sale_date"
               value={form.sale_date}
               onChange={handleChange}
-              className="border p-2 w-full mb-4"
+              className="border p-2 w-full mb-4 rounded focus:ring-2 focus:ring-blue-400"
             />
 
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowForm(false)}
-                className="bg-gray-300 px-3 py-1"
+                className="bg-gray-300 px-3 py-1 rounded"
               >
                 Cancel
               </button>
 
               <button
                 onClick={handleSubmit}
-                className="bg-blue-600 text-white px-3 py-1"
+                disabled={
+                  !form.dealer_id ||
+                  !form.model_id ||
+                  !form.quantity ||
+                  !form.sale_date ||
+                  Number(form.quantity) <= 0
+                }
+                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
               >
-                Save
+                {edit_id ? "Update" : "Save"}
               </button>
             </div>
           </div>

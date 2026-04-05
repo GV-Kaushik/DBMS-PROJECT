@@ -12,6 +12,8 @@ const AssignParts = () => {
   const [cars, setCars] = useState([]);
   const [parts, setParts] = useState([]);
   const [showAssiForm, setshowAssiForm] = useState(false);
+  const [error, setError] = useState("");
+  const [edit_id, setEdit_id] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -28,10 +30,22 @@ const AssignParts = () => {
   };
 
   const handleChange = (e) => {
+    setError("");
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
   const addAssign = async () => {
-    // quantity validation  (added in both frontend and backend for faster response)
+    // REQUIRED VALIDATION
+    if (!form.model_id || !form.part_id || !form.quantity_required) {
+      setError("All fields are required");
+      return;
+    }
+
+    if (Number(form.quantity_required) <= 0) {
+      setError("Quantity must be greater than 0");
+      return;
+    }
+
     try {
       const selectedPart = parts.find((p) => p.part_id == form.part_id);
 
@@ -43,7 +57,12 @@ const AssignParts = () => {
         return;
       }
 
-      await api.post("/assign", form);
+      if (edit_id) {
+        await api.put(`/assign/${edit_id}`, form);
+        setEdit_id(null);
+      } else {
+        await api.post("/assign", form);
+      }
 
       fetchData();
       setshowAssiForm(false);
@@ -57,6 +76,7 @@ const AssignParts = () => {
       console.log(err);
     }
   };
+
   const deleteAssign = async (id) => {
     await api.delete(`/assign/${id}`);
     fetchData();
@@ -65,20 +85,27 @@ const AssignParts = () => {
   return (
     <>
       <div className="p-6">
-        <div className="flex justify-between mb-6">
-          <h1 className="text-2xl font-bold">Assign Parts</h1>
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Assign Parts</h1>
+            <p className="text-sm text-gray-500">
+              Assign parts to car models with required quantity
+            </p>
+          </div>
 
           <button
             onClick={() => setshowAssiForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow"
           >
             + Assign Part
           </button>
         </div>
 
+        {/* TABLE */}
         <div className="bg-white rounded-xl shadow overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-100 text-xs uppercase">
+            <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
               <tr>
                 <th className="p-3 text-left">Car Model</th>
                 <th className="p-3 text-left">Part</th>
@@ -90,36 +117,70 @@ const AssignParts = () => {
             <tbody>
               {assign.map((a) => (
                 <tr key={a.id} className="border-t hover:bg-gray-50">
-                  <td className="p-3">{a.model_name}</td>
-                  <td>{a.part_name}</td>
-                  <td>{a.quantity_required}</td>
+                  <td className="p-3 font-medium">{a.model_name}</td>
+                  <td className="text-gray-600">{a.part_name}</td>
+                  <td className="text-blue-600 font-semibold">
+                    {a.quantity_required}
+                  </td>
 
-                  <td className="text-center">
+                  <td className="flex justify-center gap-2 p-2">
+                    <button
+                      onClick={() => {
+                        setForm({
+                          model_id: a.model_id,
+                          part_id: a.part_id,
+                          quantity_required: a.quantity_required,
+                        });
+                        setEdit_id(a.id);
+                        setshowAssiForm(true);
+                      }}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
+                    >
+                      Edit
+                    </button>
+
                     <button
                       onClick={() => deleteAssign(a.id)}
-                      className="bg-red-500 text-white px-3 py-1 rounded text-xs"
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
                     >
-                      Remove
+                      Delete
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {assign.length === 0 && (
+            <p className="text-center p-4 text-gray-500">No data found</p>
+          )}
         </div>
       </div>
-      {/*Assign form*/}
 
+      {/* MODAL */}
       {showAssiForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-xl w-[400px]">
-            <h2 className="font-bold mb-4">Assign Part</h2>
+        <div
+          className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center"
+          onClick={() => setshowAssiForm(false)}
+        >
+          <div
+            className="bg-white p-6 rounded-xl w-[400px] shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-4">
+              {edit_id ? "Edit Assignment" : "Assign Part"}
+            </h2>
+
+            {error && (
+              <p className="text-red-500 text-sm mb-2 text-center">{error}</p>
+            )}
 
             <select
               name="model_id"
+              required
               value={form.model_id}
               onChange={handleChange}
-              className="border p-2 w-full mb-2"
+              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
             >
               <option value="">Select Car</option>
               {cars.map((c) => (
@@ -131,9 +192,10 @@ const AssignParts = () => {
 
             <select
               name="part_id"
+              required
               value={form.part_id}
               onChange={handleChange}
-              className="border p-2 w-full mb-2"
+              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
             >
               <option value="">Select Part</option>
               {parts.map((p) => (
@@ -145,19 +207,34 @@ const AssignParts = () => {
 
             <input
               name="quantity_required"
-              placeholder="Qunatity Required"
+              type="number"
+              required
+              min="1"
+              placeholder="Quantity Required"
               value={form.quantity_required}
               onChange={handleChange}
-              className="border p-2 w-full mb-4"
+              className="border p-2 w-full mb-4 rounded focus:ring-2 focus:ring-blue-400"
             />
 
             <div className="flex justify-end gap-2">
-              <button onClick={() => setshowAssiForm(false)}>Cancel</button>
+              <button
+                onClick={() => setshowAssiForm(false)}
+                className="bg-gray-300 px-3 py-1 rounded"
+              >
+                Cancel
+              </button>
+
               <button
                 onClick={addAssign}
-                className="bg-blue-600 text-white px-3 py-1 rounded"
+                disabled={
+                  !form.model_id ||
+                  !form.part_id ||
+                  !form.quantity_required ||
+                  Number(form.quantity_required) <= 0
+                }
+                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
               >
-                Assign
+                {edit_id ? "Update" : "Assign"}
               </button>
             </div>
           </div>

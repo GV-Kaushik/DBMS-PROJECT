@@ -13,6 +13,7 @@ const Suppliers = () => {
   const [showEform, setShowEform] = useState(false);
 
   const [search, setSearch] = useState(""); 
+  const [error, setError] = useState("");
 
   useEffect(() => {
     api.get("/suppliers")
@@ -21,18 +22,25 @@ const Suppliers = () => {
   }, []);
 
   const handleChange = (e) => {
+    setError("");
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const addSupplier = async () => {
+    // REQUIRED VALIDATION
+    if (!form.supplier_name.trim() || !form.city.trim() || !form.contact.trim()) {
+      setError("All fields are required");
+      return;
+    }
+
     if (edit_id) {
       await api.put(`/suppliers/${edit_id}`, form);
       setEdit_id(null);
-     
     } else {
       await api.post("/suppliers", form);
     }
-      setShowEform(false);
+
+    setShowEform(false);
 
     const res = await api.get("/suppliers");
     setSupplier(res.data);
@@ -50,7 +58,6 @@ const Suppliers = () => {
     setSupplier(res.data);
   };
 
-
   const filteredSuppliers = supplier.filter((s) =>
     s.supplier_name.toLowerCase().includes(search.toLowerCase()) ||
     s.city.toLowerCase().includes(search.toLowerCase())
@@ -60,28 +67,30 @@ const Suppliers = () => {
     <>
       <div className="p-6">
 
-     
-        <div className="flex justify-between mb-6">
-          <h1 className="text-2xl font-bold">Suppliers</h1>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Suppliers</h1>
+            <p className="text-sm text-gray-500">
+              Manage supplier details and contacts
+            </p>
+          </div>
 
           <button
             onClick={() => setShowEform(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow"
           >
             + Add Supplier
           </button>
         </div>
 
-      
         <input
           type="text"
           placeholder="Search by supplier or city..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border p-2 rounded w-full mb-4"
+          className="border p-2 rounded-lg w-full mb-4 focus:ring-2 focus:ring-blue-400"
         />
 
-      
         <div className="bg-white rounded-xl shadow overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
@@ -96,8 +105,8 @@ const Suppliers = () => {
             <tbody>
               {filteredSuppliers.map((s) => (
                 <tr key={s.supplier_id} className="border-t hover:bg-gray-50">
-                  <td className="p-3">{s.supplier_name}</td>
-                  <td>{s.city}</td>
+                  <td className="p-3 font-medium">{s.supplier_name}</td>
+                  <td className="text-gray-600">{s.city}</td>
                   <td>{s.contact}</td>
 
                   <td className="flex justify-center gap-2 p-2">
@@ -122,26 +131,37 @@ const Suppliers = () => {
                 </tr>
               ))}
             </tbody>
-
           </table>
+
+          {filteredSuppliers.length === 0 && (
+            <p className="text-center p-4 text-gray-500">No data found</p>
+          )}
         </div>
       </div>
 
-  
       {showEform && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-xl w-[400px] shadow-lg">
-
+        <div
+          className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center"
+          onClick={() => setShowEform(false)}
+        >
+          <div
+            className="bg-white p-6 rounded-xl w-[400px] shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2 className="text-lg font-bold mb-4">
               {edit_id ? "Edit Supplier" : "Add Supplier"}
             </h2>
+
+            {error && (
+              <p className="text-red-500 text-sm mb-2 text-center">{error}</p>
+            )}
 
             <input
               name="supplier_name"
               placeholder="Supplier Name"
               value={form.supplier_name}
               onChange={handleChange}
-              className="border p-2 w-full mb-2 rounded"
+              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
             />
 
             <input
@@ -149,7 +169,7 @@ const Suppliers = () => {
               placeholder="City"
               value={form.city}
               onChange={handleChange}
-              className="border p-2 w-full mb-2 rounded"
+              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
             />
 
             <input
@@ -157,7 +177,7 @@ const Suppliers = () => {
               placeholder="Contact"
               value={form.contact}
               onChange={handleChange}
-              className="border p-2 w-full mb-4 rounded"
+              className="border p-2 w-full mb-4 rounded focus:ring-2 focus:ring-blue-400"
             />
 
             <div className="flex justify-end gap-2">
@@ -170,12 +190,12 @@ const Suppliers = () => {
 
               <button
                 onClick={addSupplier}
-                className="bg-blue-600 text-white px-3 py-1 rounded"
+                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
+                disabled={!form.supplier_name || !form.city || !form.contact}
               >
                 Save
               </button>
             </div>
-
           </div>
         </div>
       )}
