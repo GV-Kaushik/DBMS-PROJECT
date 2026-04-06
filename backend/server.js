@@ -299,6 +299,7 @@ app.get("/part-supply", async (req, res) => {
   }
 });
 
+
 // ADD SUPPLY RECORD
 app.post("/part-supply", async (req, res) => {
   try {
@@ -352,24 +353,6 @@ app.post("/part-supply", async (req, res) => {
   }
 });
 
-// DELETE
-app.delete("/part-supply/:id", async (req, res) => {
-  try {
-    const result = await pool.query(
-      "DELETE FROM part_supply WHERE supply_id=$1 RETURNING *",
-      [req.params.id],
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Record not found" });
-    }
-
-    res.json({ message: "Deleted successfully" });
-  } catch (err) {
-    console.log("SUPPLY DELETE ERROR:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
 
 //FACTORY ROUTES--------------------------------------->
 

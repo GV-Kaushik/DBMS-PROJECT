@@ -111,10 +111,10 @@ const Users = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
               <tr>
-                <th className="p-3 text-left">Email</th>
-                <th className="p-3 text-left">Role</th>
-                <th className="p-3 text-left">Phone</th>
-                <th className="p-3 text-left">Date</th>
+                <th className="p-3 text-center">Email</th>
+                <th className="p-3 text-center">Role</th>
+                <th className="p-3 text-center">Phone</th>
+                <th className="p-3 text-center">Date</th>
                 <th className="p-3 text-center">Actions</th>
               </tr>
             </thead>
@@ -122,10 +122,10 @@ const Users = () => {
             <tbody>
               {filtered.map((u) => (
                 <tr key={u.user_id} className="border-t hover:bg-gray-50">
-                  <td className="p-3 font-medium">{u.email}</td>
-                  <td className="text-gray-600 capitalize">{u.role}</td>
-                  <td>{u.phone_num || "-"}</td>
-                  <td>{u.created_date?.split("T")[0]}</td>
+                  <td className="p-3 font-medium text-center">{u.email}</td>
+                  <td className="text-gray-600 capitalize text-center">{u.role}</td>
+                  <td className="text-center">{u.phone_num || "-"}</td>
+                  <td className="text-center">{u.created_date?.split("T")[0]}</td>
 
                   <td className="flex justify-center gap-2 p-2">
                     <button

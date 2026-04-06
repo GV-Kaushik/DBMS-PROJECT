@@ -112,10 +112,10 @@ const Parts = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
               <tr>
-                <th className="p-3 text-left">Part</th>
-                <th className="p-3 text-left">Category</th>
-                <th className="p-3 text-left">Cost</th>
-                <th className="p-3 text-left">Qty</th>
+                <th className="p-3 text-center">Part</th>
+                <th className="p-3 text-center">Category</th>
+                <th className="p-3 text-center">Cost</th>
+                <th className="p-3 text-center">Qty</th>
                 <th className="p-3 text-center">Actions</th>
               </tr>
             </thead>
@@ -123,12 +123,12 @@ const Parts = () => {
             <tbody>
               {filteredParts.map((p) => (
                 <tr key={p.part_id} className="border-t hover:bg-gray-50">
-                  <td className="p-3 font-medium">{p.part_name}</td>
-                  <td className="text-gray-600">{p.category}</td>
-                  <td className="text-green-600 font-semibold">
+                  <td className="p-3 font-medium text-center">{p.part_name}</td>
+                  <td className="text-gray-600 text-center">{p.category}</td>
+                  <td className="text-green-600 text-center font-semibold">
                     ₹{p.cost}
                   </td>
-                  <td className="text-blue-600 font-semibold">
+                  <td className="text-blue-600 font-semibold text-center">
                     {p.quantity}
                   </td>
 

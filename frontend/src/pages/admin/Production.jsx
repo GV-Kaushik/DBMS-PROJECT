@@ -13,7 +13,6 @@ const Production = () => {
     production_date: "",
   });
 
-  const [edit_id, setEdit_id] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
@@ -47,12 +46,7 @@ const Production = () => {
 
     setError("");
 
-    if (edit_id) {
-      await api.put(`/production/${edit_id}`, form);
-      setEdit_id(null);
-    } else {
-      await api.post("/production", form);
-    }
+    await api.post("/production", form);
 
     setShowForm(false);
     setForm({
@@ -62,11 +56,6 @@ const Production = () => {
       production_date: "",
     });
 
-    loadData();
-  };
-
-  const handleDelete = async (id) => {
-    await api.delete(`/production/${id}`);
     loadData();
   };
 
@@ -104,46 +93,20 @@ const Production = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
               <tr>
-                <th className="p-3 text-left">Factory</th>
-                <th className="p-3 text-left">Model</th>
-                <th className="p-3 text-left">Qty</th>
+                <th className="p-3 text-center">Factory</th>
+                <th className="p-3 text-center">Model</th>
+                <th className="p-3 text-center">Qty</th>
                 <th className="p-3 text-left">Date</th>
-                <th className="p-3 text-center">Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {filtered.map((d) => (
                 <tr key={d.production_id} className="border-t hover:bg-gray-50">
-                  <td className="p-3 font-medium">{d.factory_location}</td>
-                  <td className="text-gray-600">{d.model_name}</td>
-                  <td className="text-blue-600 font-semibold">{d.quantity}</td>
+                  <td className="p-3 font-medium text-center">{d.factory_location}</td>
+                  <td className="text-gray-600 text-center ">{d.model_name}</td>
+                  <td className="text-blue-600 text-center font-semibold">{d.quantity}</td>
                   <td>{d.production_date?.split("T")[0]}</td>
-
-                  <td className="flex justify-center gap-2 p-2">
-                    <button
-                      onClick={() => {
-                        setForm({
-                          factory_id: d.factory_id,
-                          model_id: d.model_id,
-                          quantity: d.quantity,
-                          production_date: d.production_date?.split("T")[0],
-                        });
-                        setEdit_id(d.production_id);
-                        setShowForm(true);
-                      }}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(d.production_id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
-                    >
-                      Delete
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -165,7 +128,7 @@ const Production = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-bold mb-4">
-              {edit_id ? "Edit Record" : "Add Record"}
+              Add Record
             </h2>
 
             {error && (

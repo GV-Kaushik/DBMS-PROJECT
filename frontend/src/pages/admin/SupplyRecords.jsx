@@ -15,7 +15,6 @@ const SupplyRecords = () => {
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
-  const [edit_id, setEdit_id] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -48,12 +47,7 @@ const SupplyRecords = () => {
     }
 
     try {
-      if (edit_id) {
-        await api.put(`/part-supply/${edit_id}`, form);
-        setEdit_id(null);
-      } else {
-        await api.post("/part-supply", form);
-      }
+      await api.post("/part-supply", form);
 
       setShowForm(false);
       setForm({
@@ -68,15 +62,10 @@ const SupplyRecords = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    await api.delete(`/part-supply/${id}`);
-    loadData();
-  };
-
   const filtered = records.filter(
     (r) =>
       r.supplier_name.toLowerCase().includes(search.toLowerCase()) ||
-      r.part_name.toLowerCase().includes(search.toLowerCase())
+      r.part_name.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -85,9 +74,7 @@ const SupplyRecords = () => {
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">
-              Supply Records
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-800">Supply Records</h1>
             <p className="text-sm text-gray-500">
               Track supplier deliveries and part supplies
             </p>
@@ -114,47 +101,18 @@ const SupplyRecords = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
               <tr>
-                <th className="p-3 text-left">Supplier</th>
-                <th className="p-3 text-left">Part</th>
-                <th className="p-3 text-left">Quantity</th>
-                <th className="p-3 text-center">Actions</th>
+                <th className="p-3 ttext-center">Supplier</th>
+                <th className="p-3 text-center">Part</th>
+                <th className="p-3 text-center">Quantity</th>
               </tr>
             </thead>
 
             <tbody>
               {filtered.map((r) => (
                 <tr key={r.supply_id} className="border-t hover:bg-gray-50">
-                  <td className="p-3 font-medium">{r.supplier_name}</td>
-                  <td className="text-gray-600">{r.part_name}</td>
-                  <td className="text-blue-600 font-semibold">
-                    {r.quantity}
-                  </td>
-
-                  <td className="flex justify-center gap-2 p-2">
-                    {/* EDIT */}
-                    <button
-                      onClick={() => {
-                        setForm({
-                          supplier_id: r.supplier_id,
-                          part_id: r.part_id,
-                          quantity: r.quantity,
-                        });
-                        setEdit_id(r.supply_id);
-                        setShowForm(true);
-                      }}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
-                    >
-                      Edit
-                    </button>
-
-                    {/* DELETE */}
-                    <button
-                      onClick={() => handleDelete(r.supply_id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
-                    >
-                      Delete
-                    </button>
-                  </td>
+                  <td className="p-3 font-medium text-center">{r.supplier_name}</td>
+                  <td className="text-gray-600 text-center">{r.part_name}</td>
+                  <td className="text-blue-600 text-center font-semibold">{r.quantity}</td>
                 </tr>
               ))}
             </tbody>
@@ -176,9 +134,7 @@ const SupplyRecords = () => {
             className="bg-white p-6 rounded-xl w-[400px] shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-bold mb-4">
-              {edit_id ? "Edit Record" : "Add Supply Record"}
-            </h2>
+            <h2 className="text-lg font-bold mb-4">Add Supply Record</h2>
 
             {error && (
               <p className="text-red-500 text-sm mb-2 text-center">{error}</p>
@@ -203,9 +159,7 @@ const SupplyRecords = () => {
             <select
               required
               value={form.part_id}
-              onChange={(e) =>
-                setForm({ ...form, part_id: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, part_id: e.target.value })}
               className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
             >
               <option value="">Select Part</option>
@@ -222,9 +176,7 @@ const SupplyRecords = () => {
               min="1"
               placeholder="Quantity"
               value={form.quantity}
-              onChange={(e) =>
-                setForm({ ...form, quantity: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, quantity: e.target.value })}
               className="border p-2 w-full mb-4 rounded focus:ring-2 focus:ring-blue-400"
             />
 
@@ -246,7 +198,7 @@ const SupplyRecords = () => {
                 }
                 className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
               >
-                {edit_id ? "Update" : "Save"}
+                Save
               </button>
             </div>
           </div>

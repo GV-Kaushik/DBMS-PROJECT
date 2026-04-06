@@ -107,9 +107,9 @@ const AssignParts = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
               <tr>
-                <th className="p-3 text-left">Car Model</th>
-                <th className="p-3 text-left">Part</th>
-                <th className="p-3 text-left">Qty</th>
+                <th className="p-3 text-center">Car Model</th>
+                <th className="p-3 text-center">Part</th>
+                <th className="p-3 text-center">Qty</th>
                 <th className="p-3 text-center">Actions</th>
               </tr>
             </thead>
@@ -117,9 +117,9 @@ const AssignParts = () => {
             <tbody>
               {assign.map((a) => (
                 <tr key={a.id} className="border-t hover:bg-gray-50">
-                  <td className="p-3 font-medium">{a.model_name}</td>
-                  <td className="text-gray-600">{a.part_name}</td>
-                  <td className="text-blue-600 font-semibold">
+                  <td className="p-3 font-medium text-center">{a.model_name}</td>
+                  <td className="text-gray-600 text-center">{a.part_name}</td>
+                  <td className="text-blue-600 text-center font-semibold">
                     {a.quantity_required}
                   </td>
 

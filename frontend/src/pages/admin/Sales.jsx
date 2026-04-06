@@ -13,7 +13,6 @@ const Sales = () => {
     sale_date: "",
   });
 
-  const [edit_id, setEdit_id] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
@@ -64,12 +63,7 @@ const Sales = () => {
     setError("");
 
     try {
-      if (edit_id) {
-        await api.put(`/sales/${edit_id}`, form);
-        setEdit_id(null);
-      } else {
-        await api.post("/sales", form);
-      }
+      await api.post("/sales", form);
 
       setShowForm(false);
       setForm({
@@ -83,11 +77,6 @@ const Sales = () => {
     } catch (err) {
       console.log(err);
     }
-  };
-
-  const handleDelete = async (id) => {
-    await api.delete(`/sales/${id}`);
-    loadData();
   };
 
   const filtered = sales.filter(
@@ -129,46 +118,20 @@ const Sales = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
               <tr>
-                <th className="p-3 text-left">Dealer</th>
-                <th className="p-3 text-left">Model</th>
-                <th className="p-3 text-left">Qty</th>
-                <th className="p-3 text-left">Date</th>
-                <th className="p-3 text-center">Actions</th>
+                <th className="p-3 text-center">Dealer</th>
+                <th className="p-3 text-center">Model</th>
+                <th className="p-3 text-center">Qty</th>
+                <th className="p-3 text-center">Date</th>
               </tr>
             </thead>
 
             <tbody>
               {filtered.map((s) => (
                 <tr key={s.sale_id} className="border-t hover:bg-gray-50">
-                  <td className="p-3 font-medium">{s.dealer_name}</td>
-                  <td className="text-gray-600">{s.model_name}</td>
-                  <td className="text-blue-600 font-semibold">{s.quantity}</td>
-                  <td>{s.sale_date?.split("T")[0]}</td>
-
-                  <td className="flex justify-center gap-2 p-2">
-                    <button
-                      onClick={() => {
-                        setForm({
-                          dealer_id: s.dealer_id,
-                          model_id: s.model_id,
-                          quantity: s.quantity,
-                          sale_date: s.sale_date?.split("T")[0],
-                        });
-                        setEdit_id(s.sale_id);
-                        setShowForm(true);
-                      }}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(s.sale_id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
-                    >
-                      Delete
-                    </button>
-                  </td>
+                  <td className="p-3 font-medium text-center">{s.dealer_name}</td>
+                  <td className="text-gray-600 text-center">{s.model_name}</td>
+                  <td className="text-blue-600 font-semibold text-center">{s.quantity}</td>
+                  <td className="text-center">{s.sale_date?.split("T")[0]}</td>
                 </tr>
               ))}
             </tbody>
@@ -191,7 +154,7 @@ const Sales = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-bold mb-4">
-              {edit_id ? "Edit Sale" : "Add Sale"}
+              Add Sale
             </h2>
 
             {error && (
@@ -263,7 +226,7 @@ const Sales = () => {
                 }
                 className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
               >
-                {edit_id ? "Update" : "Save"}
+                Save
               </button>
             </div>
           </div>

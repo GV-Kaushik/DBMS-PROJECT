@@ -114,10 +114,10 @@ const Cars = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
               <tr>
-                <th className="p-3 text-left">Model</th>
-                <th className="p-3 text-left">Company</th>
-                <th className="p-3 text-left">Price</th>
-                <th className="p-3 text-left">Engine</th>
+                <th className="p-3 text-center">Model</th>
+                <th className="p-3 text-center">Company</th>
+                <th className="p-3 text-center">Price</th>
+                <th className="p-3 text-center">Engine</th>
                 <th className="p-3 text-center">Actions</th>
               </tr>
             </thead>
@@ -125,14 +125,18 @@ const Cars = () => {
             <tbody>
               {filteredCars.map((car) => (
                 <tr key={car.model_id} className="border-t hover:bg-gray-50">
-                  <td className="p-3 font-medium">{car.model_name}</td>
+                  <td className="p-3 font-medium text-center">
+                    {car.model_name}
+                  </td>
 
-                  <td className="text-gray-600">{car.company}</td>
+                  <td className="text-gray-600 text-center">{car.company}</td>
 
-                  <td className="text-green-600 font-semibold">₹{car.price}</td>
+                  <td className="text-green-600 font-semibold text-center">
+                    ₹{car.price}
+                  </td>
 
-                  <td>
-                    <span className="bg-gray-200 px-2 py-1 rounded text-xs">
+                  <td className="text-center">
+                    <span className="bg-gray-200 px-2 py-1 rounded inline-block">
                       {car.engine_type}
                     </span>
                   </td>
@@ -144,14 +148,14 @@ const Cars = () => {
                         setEdit_id(car.model_id);
                         setShowEform(true);
                       }}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-center"
                     >
                       Edit
                     </button>
 
                     <button
                       onClick={() => deleteCar(car.model_id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-center"
                     >
                       Delete
                     </button>

@@ -68,7 +68,7 @@ const Factories = () => {
             </p>
           </div>
 
-          {/* ✅ ONLY ADMIN */}
+       
           {role === "admin" && (
             <button
               onClick={() => setShowForm(true)}
@@ -92,10 +92,10 @@ const Factories = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
               <tr>
-                <th className="p-3 text-left">Location</th>
-                <th className="p-3 text-left">Capacity</th>
+                <th className="p-3 text-center">Location</th>
+                <th className="p-3 text-center">Capacity(Units Per Day)</th>
 
-                {/* ✅ ONLY ADMIN */}
+              
                 {role === "admin" && (
                   <th className="p-3 text-center">Actions</th>
                 )}
@@ -105,8 +105,8 @@ const Factories = () => {
             <tbody>
               {filtered.map((f) => (
                 <tr key={f.factory_id} className="border-t hover:bg-gray-50">
-                  <td className="p-3 font-medium">{f.location}</td>
-                  <td className="text-blue-600 font-semibold">{f.capacity}</td>
+                  <td className="p-3 font-medium text-center">{f.location}</td>
+                  <td className= " text-center text-blue-600 font-semibold">{f.capacity}</td>
 
                   {/* ✅ ONLY ADMIN */}
                   {role === "admin" && (
@@ -143,7 +143,7 @@ const Factories = () => {
 
       {/* MODAL */}
       {role === "admin" &&
-        showForm && ( // ✅ ONLY ADMIN
+        showForm && ( 
           <div
             className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center"
             onClick={() => setShowForm(false)}

@@ -95,9 +95,9 @@ const Suppliers = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
               <tr>
-                <th className="p-3 text-left">Supplier</th>
-                <th className="p-3 text-left">City</th>
-                <th className="p-3 text-left">Contact</th>
+                <th className="p-3 text-center">Supplier</th>
+                <th className="p-3 text-center">City</th>
+                <th className="p-3 text-center">Contact</th>
                 <th className="p-3 text-center">Actions</th>
               </tr>
             </thead>
@@ -105,9 +105,9 @@ const Suppliers = () => {
             <tbody>
               {filteredSuppliers.map((s) => (
                 <tr key={s.supplier_id} className="border-t hover:bg-gray-50">
-                  <td className="p-3 font-medium">{s.supplier_name}</td>
-                  <td className="text-gray-600">{s.city}</td>
-                  <td>{s.contact}</td>
+                  <td className="p-3 font-medium text-center">{s.supplier_name}</td>
+                  <td className="text-gray-600 text-center">{s.city}</td>
+                  <td className="text-center">{s.contact}</td>
 
                   <td className="flex justify-center gap-2 p-2">
                     <button

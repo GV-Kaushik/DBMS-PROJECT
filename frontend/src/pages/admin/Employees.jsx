@@ -85,7 +85,6 @@ const Employees = () => {
             </p>
           </div>
 
-          {/* ✅ ONLY ADMIN */}
           {role === "admin" && (
             <button
               onClick={() => setShowEform(true)}
@@ -109,11 +108,10 @@ const Employees = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
               <tr>
-                <th className="p-3 text-left">Name</th>
-                <th className="p-3 text-left">Role</th>
-                <th className="p-3 text-left">Factory</th>
+                <th className="p-3 text-center">Name</th>
+                <th className="p-3 text-center">Role</th>
+                <th className="p-3 text-center">Factory</th>
 
-                {/* ✅ ONLY ADMIN */}
                 {role === "admin" && (
                   <th className="p-3 text-center">Actions</th>
                 )}
@@ -123,11 +121,10 @@ const Employees = () => {
             <tbody>
               {filtered.map((e) => (
                 <tr key={e.employee_id} className="border-t hover:bg-gray-50">
-                  <td className="p-3 font-medium">{e.name}</td>
-                  <td className="text-gray-600">{e.role}</td>
-                  <td>{e.factory_location}</td>
+                  <td className="p-3 font-medium text-center">{e.name}</td>
+                  <td className="text-gray-600 text-center">{e.role}</td>
+                  <td className="text-center">{e.factory_location}</td>
 
-                  {/* ✅ ONLY ADMIN */}
                   {role === "admin" && (
                     <td className="flex justify-center gap-2 p-2">
                       <button
@@ -165,73 +162,72 @@ const Employees = () => {
       </div>
 
       {/* MODAL */}
-      {role === "admin" &&
-        showEform && ( // ✅ ONLY ADMIN
+      {role === "admin" && showEform && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center"
+          onClick={() => setShowEform(false)}
+        >
           <div
-            className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center"
-            onClick={() => setShowEform(false)}
+            className="bg-white p-6 rounded-xl w-[400px] shadow-lg"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className="bg-white p-6 rounded-xl w-[400px] shadow-lg"
-              onClick={(e) => e.stopPropagation()}
+            <h2 className="text-lg font-bold mb-4">
+              {edit_id ? "Edit Employee" : "Add Employee"}
+            </h2>
+
+            {error && (
+              <p className="text-red-500 text-sm mb-2 text-center">{error}</p>
+            )}
+
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Name"
+              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
+            />
+
+            <input
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+              placeholder="Role"
+              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
+            />
+
+            <select
+              name="factory_id"
+              value={form.factory_id}
+              onChange={handleChange}
+              className="border p-2 w-full mb-4 rounded focus:ring-2 focus:ring-blue-400"
             >
-              <h2 className="text-lg font-bold mb-4">
-                {edit_id ? "Edit Employee" : "Add Employee"}
-              </h2>
+              <option value="">Select Factory</option>
+              {factories.map((f) => (
+                <option key={f.factory_id} value={f.factory_id}>
+                  {f.location}
+                </option>
+              ))}
+            </select>
 
-              {error && (
-                <p className="text-red-500 text-sm mb-2 text-center">{error}</p>
-              )}
-
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="Name"
-                className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
-              />
-
-              <input
-                name="role"
-                value={form.role}
-                onChange={handleChange}
-                placeholder="Role"
-                className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
-              />
-
-              <select
-                name="factory_id"
-                value={form.factory_id}
-                onChange={handleChange}
-                className="border p-2 w-full mb-4 rounded focus:ring-2 focus:ring-blue-400"
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowEform(false)}
+                className="bg-gray-300 px-3 py-1 rounded"
               >
-                <option value="">Select Factory</option>
-                {factories.map((f) => (
-                  <option key={f.factory_id} value={f.factory_id}>
-                    {f.location}
-                  </option>
-                ))}
-              </select>
+                Cancel
+              </button>
 
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setShowEform(false)}
-                  className="bg-gray-300 px-3 py-1 rounded"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={handleSubmit}
-                  disabled={!form.name || !form.role || !form.factory_id}
-                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {edit_id ? "Update" : "Save"}
-                </button>
-              </div>
+              <button
+                onClick={handleSubmit}
+                disabled={!form.name || !form.role || !form.factory_id}
+                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
+              >
+                {edit_id ? "Update" : "Save"}
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </>
   );
 };
