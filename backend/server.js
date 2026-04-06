@@ -42,7 +42,7 @@ app.post("/login", async (req, res) => {
   } catch (err) {
   console.error("LOGIN ERROR FULL:", err);
   res.status(500).json({ error: err.message });
-}s.status(500).json(err.message);
+}
   
 });
 
