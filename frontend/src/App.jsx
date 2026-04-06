@@ -18,6 +18,7 @@ import Employees from "./pages/admin/Employees";
 import Dealers from "./pages/admin/Dealers";
 import Sales from "./pages/admin/Sales";
 import Users from "./pages/admin/Users";
+import DesignDashboard from "./pages/design/DesignDashboard";
 
 // other roles
 import Production_role from "./components/Production_role";
@@ -58,7 +59,7 @@ function App() {
         </ProtectedRoute>
       ),
       children: [
-        { index: true, element: <Cars /> },
+        { index: true, element: <DesignDashboard /> },
 
         { path: "cars", element: <Cars /> },
         { path: "assign-parts", element: <AssignParts /> },
