@@ -1,14 +1,16 @@
 import Sidebar from "../../components/Sidebar";
 import { Outlet } from "react-router-dom";
 
-const DesignLayout = () => {
+const ProductionLayout = () => {
   return (
     <div className="flex">
       <Sidebar />
 
       <div className="flex-1 bg-gray-100 min-h-screen">
         <div className="p-4 border-b bg-white shadow-sm">
-          <h1 className="font-semibold text-gray-700">Design and Supply Manager</h1>
+          <h1 className="font-semibold text-gray-700">
+            Production Manager
+          </h1>
         </div>
 
         <Outlet />
@@ -17,4 +19,4 @@ const DesignLayout = () => {
   );
 };
 
-export default DesignLayout;
+export default ProductionLayout;

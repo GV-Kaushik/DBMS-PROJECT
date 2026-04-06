@@ -16,6 +16,8 @@ const Employees = () => {
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
 
+  const role = localStorage.getItem("role");
+
   useEffect(() => {
     loadEmployees();
     loadFactories();
@@ -68,7 +70,7 @@ const Employees = () => {
   };
 
   const filtered = employees.filter((e) =>
-    e.name.toLowerCase().includes(search.toLowerCase())
+    e.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -83,12 +85,15 @@ const Employees = () => {
             </p>
           </div>
 
-          <button
-            onClick={() => setShowEform(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow"
-          >
-            + Add Employee
-          </button>
+          {/* ✅ ONLY ADMIN */}
+          {role === "admin" && (
+            <button
+              onClick={() => setShowEform(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow"
+            >
+              + Add Employee
+            </button>
+          )}
         </div>
 
         {/* SEARCH */}
@@ -107,7 +112,11 @@ const Employees = () => {
                 <th className="p-3 text-left">Name</th>
                 <th className="p-3 text-left">Role</th>
                 <th className="p-3 text-left">Factory</th>
-                <th className="p-3 text-center">Actions</th>
+
+                {/* ✅ ONLY ADMIN */}
+                {role === "admin" && (
+                  <th className="p-3 text-center">Actions</th>
+                )}
               </tr>
             </thead>
 
@@ -118,29 +127,32 @@ const Employees = () => {
                   <td className="text-gray-600">{e.role}</td>
                   <td>{e.factory_location}</td>
 
-                  <td className="flex justify-center gap-2 p-2">
-                    <button
-                      onClick={() => {
-                        setForm({
-                          name: e.name,
-                          role: e.role,
-                          factory_id: e.factory_id,
-                        });
-                        setEdit_id(e.employee_id);
-                        setShowEform(true);
-                      }}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
-                    >
-                      Edit
-                    </button>
+                  {/* ✅ ONLY ADMIN */}
+                  {role === "admin" && (
+                    <td className="flex justify-center gap-2 p-2">
+                      <button
+                        onClick={() => {
+                          setForm({
+                            name: e.name,
+                            role: e.role,
+                            factory_id: e.factory_id,
+                          });
+                          setEdit_id(e.employee_id);
+                          setShowEform(true);
+                        }}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
+                      >
+                        Edit
+                      </button>
 
-                    <button
-                      onClick={() => handleDelete(e.employee_id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
-                    >
-                      Delete
-                    </button>
-                  </td>
+                      <button
+                        onClick={() => handleDelete(e.employee_id)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -153,74 +165,73 @@ const Employees = () => {
       </div>
 
       {/* MODAL */}
-      {showEform && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center"
-          onClick={() => setShowEform(false)}
-        >
+      {role === "admin" &&
+        showEform && ( // ✅ ONLY ADMIN
           <div
-            className="bg-white p-6 rounded-xl w-[400px] shadow-lg"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center"
+            onClick={() => setShowEform(false)}
           >
-            <h2 className="text-lg font-bold mb-4">
-              {edit_id ? "Edit Employee" : "Add Employee"}
-            </h2>
-
-            {error && (
-              <p className="text-red-500 text-sm mb-2 text-center">{error}</p>
-            )}
-
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Name"
-              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
-            />
-
-            <input
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              placeholder="Role"
-              className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
-            />
-
-            <select
-              name="factory_id"
-              value={form.factory_id}
-              onChange={handleChange}
-              className="border p-2 w-full mb-4 rounded focus:ring-2 focus:ring-blue-400"
+            <div
+              className="bg-white p-6 rounded-xl w-[400px] shadow-lg"
+              onClick={(e) => e.stopPropagation()}
             >
-              <option value="">Select Factory</option>
-              {factories.map((f) => (
-                <option key={f.factory_id} value={f.factory_id}>
-                  {f.location}
-                </option>
-              ))}
-            </select>
+              <h2 className="text-lg font-bold mb-4">
+                {edit_id ? "Edit Employee" : "Add Employee"}
+              </h2>
 
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowEform(false)}
-                className="bg-gray-300 px-3 py-1 rounded"
-              >
-                Cancel
-              </button>
+              {error && (
+                <p className="text-red-500 text-sm mb-2 text-center">{error}</p>
+              )}
 
-              <button
-                onClick={handleSubmit}
-                disabled={
-                  !form.name || !form.role || !form.factory_id
-                }
-                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
+              <input
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Name"
+                className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
+              />
+
+              <input
+                name="role"
+                value={form.role}
+                onChange={handleChange}
+                placeholder="Role"
+                className="border p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-400"
+              />
+
+              <select
+                name="factory_id"
+                value={form.factory_id}
+                onChange={handleChange}
+                className="border p-2 w-full mb-4 rounded focus:ring-2 focus:ring-blue-400"
               >
-                {edit_id ? "Update" : "Save"}
-              </button>
+                <option value="">Select Factory</option>
+                {factories.map((f) => (
+                  <option key={f.factory_id} value={f.factory_id}>
+                    {f.location}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowEform(false)}
+                  className="bg-gray-300 px-3 py-1 rounded"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleSubmit}
+                  disabled={!form.name || !form.role || !form.factory_id}
+                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {edit_id ? "Update" : "Save"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </>
   );
 };

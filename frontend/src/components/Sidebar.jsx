@@ -15,9 +15,10 @@ import {
   FaSignOutAlt,
 } from "react-icons/fa";
 
-export default function Sidebar({ role }) {
+export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const role = localStorage.getItem("role");
 
   const adminMenu = [
     { path: "/admin", label: "Dashboard", icon: <FaTachometerAlt /> },
@@ -26,7 +27,11 @@ export default function Sidebar({ role }) {
     { path: "/admin/parts", label: "Parts", icon: <FaTools /> },
     { path: "/admin/suppliers", label: "Suppliers", icon: <FaTruck /> },
     { path: "/admin/supply-records", label: "Supply Records", icon: <FaBox /> },
-    { path: "/admin/production", label: "Production Records", icon: <FaIndustry /> },
+    {
+      path: "/admin/production",
+      label: "Production Records",
+      icon: <FaIndustry />,
+    },
     { path: "/admin/factories", label: "Factories", icon: <FaBuilding /> },
     { path: "/admin/employees", label: "Employees", icon: <FaUsers /> },
     { path: "/admin/dealers", label: "Dealers", icon: <FaHandshake /> },
@@ -39,22 +44,116 @@ export default function Sidebar({ role }) {
     { path: "/design/assign-parts", label: "Assign Parts", icon: <FaCogs /> },
     { path: "/design/parts", label: "Parts", icon: <FaTools /> },
     { path: "/design/suppliers", label: "Suppliers", icon: <FaTruck /> },
-    { path: "/design/supply-records", label: "Supply Records", icon: <FaBox /> },
+    {
+      path: "/design/supply-records",
+      label: "Supply Records",
+      icon: <FaBox />,
+    },
   ];
 
   const menu =
     role === "admin"
-      ? adminMenu
+      ? [
+          { path: "/admin", label: "Dashboard", icon: <FaTachometerAlt /> },
+          { path: "/admin/cars", label: "Car Models", icon: <FaCar /> },
+          {
+            path: "/admin/assign-parts",
+            label: "Assign Parts",
+            icon: <FaCogs />,
+          },
+          { path: "/admin/parts", label: "Parts", icon: <FaTools /> },
+          { path: "/admin/suppliers", label: "Suppliers", icon: <FaTruck /> },
+          {
+            path: "/admin/supply-records",
+            label: "Supply Records",
+            icon: <FaBox />,
+          },
+          {
+            path: "/admin/production",
+            label: "Production Records",
+            icon: <FaIndustry />,
+          },
+          {
+            path: "/admin/factories",
+            label: "Factories",
+            icon: <FaBuilding />,
+          },
+          { path: "/admin/employees", label: "Employees", icon: <FaUsers /> },
+          { path: "/admin/dealers", label: "Dealers", icon: <FaHandshake /> },
+          { path: "/admin/sales", label: "Sales", icon: <FaDollarSign /> },
+          {
+            path: "/admin/users",
+            label: "Manage Users",
+            icon: <FaUserShield />,
+          },
+        ]
       : role === "design"
-      ? designMenu
-      : [];
+        ? [
+            { path: "/design", label: "Dashboard", icon: <FaTachometerAlt /> },
+            { path: "/design/cars", label: "Car Models", icon: <FaCar /> },
+            {
+              path: "/design/assign-parts",
+              label: "Assign Parts",
+              icon: <FaCogs />,
+            },
+            { path: "/design/parts", label: "Parts", icon: <FaTools /> },
+            {
+              path: "/design/suppliers",
+              label: "Suppliers",
+              icon: <FaTruck />,
+            },
+            {
+              path: "/design/supply-records",
+              label: "Supply Records",
+              icon: <FaBox />,
+            },
+          ]
+        : role === "production"
+          ? [
+              {
+                path: "/production",
+                label: "Dashboard",
+                icon: <FaTachometerAlt />,
+              },
+              {
+                path: "/production/records",
+                label: "Production",
+                icon: <FaIndustry />,
+              },
+              {
+                path: "/production/factories",
+                label: "Factories",
+                icon: <FaBuilding />,
+              },
+              {
+                path: "/production/employees",
+                label: "Employees",
+                icon: <FaUsers />,
+              },
+            ]
+          : role === "sales"
+            ? [
+                {
+                  path: "/sales",
+                  label: "Dashboard",
+                  icon: <FaTachometerAlt />,
+                },
+                {
+                  path: "/sales/dealers",
+                  label: "Dealers",
+                  icon: <FaHandshake />,
+                },
+                {
+                  path: "/sales/sales",
+                  label: "Sales Records",
+                  icon: <FaDollarSign />,
+                },
+              ]
+            : [];
 
   return (
     <div className="w-64 h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col justify-between shadow-lg">
-      
       <div>
-      
-
         <div className="p-5 border-b border-gray-700">
           <h1 className="text-xl font-bold tracking-wide">🚗 CMS</h1>
           <p className="text-xs text-gray-400">Car Manufacturing</p>
@@ -65,8 +164,8 @@ export default function Sidebar({ role }) {
             {role === "admin"
               ? "System Administrator"
               : role === "design"
-              ? "Design & Supply Manager"
-              : "User"}
+                ? "Design & Supply Manager"
+                : "User"}
           </p>
           <p className="text-xs text-gray-400 capitalize">{role}</p>
         </div>
