@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api";
+import { useNavigate } from "react-router-dom";
 
 const ProductionDashboard = () => {
   const [stats, setStats] = useState({
@@ -7,6 +8,8 @@ const ProductionDashboard = () => {
     totalFactories: 0,
     totalEmployees: 0,
   });
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadStats();
@@ -40,33 +43,59 @@ const ProductionDashboard = () => {
         </p>
       </div>
 
-      {/* STATS CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Production */}
-        <div className="bg-white p-5 rounded-xl shadow">
-          <h2 className="text-sm text-gray-500">Total Production Records</h2>
-          <p className="text-2xl font-bold text-blue-600">
-            {stats.totalProduction}
-          </p>
-        </div>
+      {/* STATS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <TopCard title="Production Records" value={stats.totalProduction} icon="🔧" />
+        <TopCard title="Factories" value={stats.totalFactories} icon="🏗️" />
+        <TopCard title="Employees" value={stats.totalEmployees} icon="👷" />
+      </div>
 
-        {/* Factories */}
-        <div className="bg-white p-5 rounded-xl shadow">
-          <h2 className="text-sm text-gray-500">Total Factories</h2>
-          <p className="text-2xl font-bold text-green-600">
-            {stats.totalFactories}
-          </p>
-        </div>
+      {/* NAVIGATION */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <ModuleCard
+          title="Production Records"
+          desc="View and add production entries"
+          icon="🔧"
+          onClick={() => navigate("/production/records")}
+        />
 
-        <div className="bg-white p-5 rounded-xl shadow">
-          <h2 className="text-sm text-gray-500">Total Employees</h2>
-          <p className="text-2xl font-bold text-purple-600">
-            {stats.totalEmployees}
-          </p>
-        </div>
+        <ModuleCard
+          title="Factories"
+          desc="Manage factory locations and capacity"
+          icon="🏗️"
+          onClick={() => navigate("/production/factories")}
+        />
+
+        <ModuleCard
+          title="Employees"
+          desc="Manage factory employees"
+          icon="👷"
+          onClick={() => navigate("/production/employees")}
+        />
       </div>
     </div>
   );
 };
 
 export default ProductionDashboard;
+
+const TopCard = ({ title, value, icon }) => (
+  <div className="bg-white rounded-xl shadow p-4 flex items-center gap-3">
+    <div className="text-2xl">{icon}</div>
+    <div>
+      <p className="text-xl font-bold">{value}</p>
+      <p className="text-gray-500 text-sm">{title}</p>
+    </div>
+  </div>
+);
+
+const ModuleCard = ({ title, desc, icon, onClick }) => (
+  <div
+    onClick={onClick}
+    className="bg-white rounded-xl shadow p-5 cursor-pointer hover:scale-105 hover:shadow-xl transition"
+  >
+    <div className="text-3xl mb-2">{icon}</div>
+    <h2 className="font-bold mb-1">{title}</h2>
+    <p className="text-gray-500 text-sm">{desc}</p>
+  </div>
+);

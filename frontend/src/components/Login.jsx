@@ -1,7 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaCar } from "react-icons/fa";
+import api from "../api";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -17,11 +17,10 @@ const Login = () => {
     }
 
     try {
-      const res = await axios.post("http://localhost:3000/login", {
+      const res = await api.post("http://localhost:3000/login", {
         email,
         password,
       });
-
       const { token, role } = res.data;
 
       localStorage.setItem("token", token);
@@ -39,24 +38,24 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black to-black">
-
-      <div className="bg-white p-8 rounded-2xl shadow-2xl w-96">
-
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200">
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-96">
         {/* ICON */}
         <div className="flex justify-center mb-4 text-blue-600 text-3xl">
           <FaCar />
         </div>
+
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-1">
           CMS Login
         </h2>
+
         <p className="text-sm text-gray-500 text-center mb-6">
           Car Manufacturing System
         </p>
+
         {error && (
           <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
         )}
-
 
         <input
           type="email"
@@ -80,7 +79,6 @@ const Login = () => {
         >
           Login
         </button>
-
       </div>
     </div>
   );

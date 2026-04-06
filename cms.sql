@@ -2,7 +2,7 @@ CREATE TABLE users (
   user_id SERIAL PRIMARY KEY,
   email VARCHAR(100) UNIQUE NOT NULL,
   password TEXT NOT NULL,
-  role VARCHAR(50) NOT NULL
+  role VARCHAR(50) NOT NULL,
   phone_num VARCHAR,
   created_date DATETIME,
 );
@@ -78,3 +78,5 @@ CREATE TABLE carmodel_parts (
   FOREIGN KEY (model_id) REFERENCES carmodel(model_id) ON DELETE CASCADE,
   FOREIGN KEY (part_id) REFERENCES part(part_id) ON DELETE CASCADE
 );
+INSERT INTO users (email, password, role, phone_num, created_date) VALUES
+('admin@gmail.com', '$2b$10$FiYj9JeWAO2F0FZcU43vEOtnUCxcG8RPTIs0c/n0RFnnSTSO4qvfi', 'admin', '9038383883', '2026-04-09');
