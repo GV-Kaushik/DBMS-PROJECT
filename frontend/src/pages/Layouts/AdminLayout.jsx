@@ -4,7 +4,7 @@ import Sidebar from "../../components/Sidebar";
 const AdminLayout = () => {
   return (
     <div className="flex h-screen bg-gray-100">
-      <Sidebar />
+      <Sidebar role="admin" />
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="bg-white shadow px-6 py-4">
           <h1 className="text-xl font-semibold text-gray-700">

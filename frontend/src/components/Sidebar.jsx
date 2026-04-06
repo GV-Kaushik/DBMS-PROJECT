@@ -15,11 +15,11 @@ import {
   FaSignOutAlt,
 } from "react-icons/fa";
 
-export default function Sidebar() {
+export default function Sidebar({ role }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const menu = [
+  const adminMenu = [
     { path: "/admin", label: "Dashboard", icon: <FaTachometerAlt /> },
     { path: "/admin/cars", label: "Car Models", icon: <FaCar /> },
     { path: "/admin/assign-parts", label: "Assign Parts", icon: <FaCogs /> },
@@ -33,20 +33,45 @@ export default function Sidebar() {
     { path: "/admin/sales", label: "Sales", icon: <FaDollarSign /> },
     { path: "/admin/users", label: "Manage Users", icon: <FaUserShield /> },
   ];
+  const designMenu = [
+    { path: "/design", label: "Dashboard", icon: <FaTachometerAlt /> },
+    { path: "/design/cars", label: "Car Models", icon: <FaCar /> },
+    { path: "/design/assign-parts", label: "Assign Parts", icon: <FaCogs /> },
+    { path: "/design/parts", label: "Parts", icon: <FaTools /> },
+    { path: "/design/suppliers", label: "Suppliers", icon: <FaTruck /> },
+    { path: "/design/supply-records", label: "Supply Records", icon: <FaBox /> },
+  ];
+
+  const menu =
+    role === "admin"
+      ? adminMenu
+      : role === "design"
+      ? designMenu
+      : [];
 
   return (
     <div className="w-64 h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col justify-between shadow-lg">
+      
       <div>
+      
+
         <div className="p-5 border-b border-gray-700">
           <h1 className="text-xl font-bold tracking-wide">🚗 CMS</h1>
           <p className="text-xs text-gray-400">Car Manufacturing</p>
         </div>
+        {/* Role Info */}
         <div className="p-4 border-b border-gray-700">
-          <p className="text-sm font-semibold">System Administrator</p>
-          <p className="text-xs text-gray-400">Administrator</p>
+          <p className="text-sm font-semibold">
+            {role === "admin"
+              ? "System Administrator"
+              : role === "design"
+              ? "Design & Supply Manager"
+              : "User"}
+          </p>
+          <p className="text-xs text-gray-400 capitalize">{role}</p>
         </div>
-        <ul className="p-3 space-y-1 text-sm">
 
+        <ul className="p-3 space-y-1 text-sm">
           {menu.map((item) => {
             const isActive = location.pathname === item.path;
 
@@ -55,21 +80,20 @@ export default function Sidebar() {
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 className={`flex items-center gap-3 px-3 py-2 rounded cursor-pointer transition-all duration-200
-                ${isActive
-                  ? "bg-blue-600 shadow-md"
-                  : "hover:bg-gray-700 hover:pl-4"}
-                `}
+                ${
+                  isActive
+                    ? "bg-blue-600 shadow-md"
+                    : "hover:bg-gray-700 hover:pl-4"
+                }`}
               >
                 <span className="text-lg">{item.icon}</span>
                 {item.label}
               </li>
             );
           })}
-
         </ul>
       </div>
 
-      {/* LOGOUT */}
       <div className="p-4 border-t border-gray-700">
         <button
           onClick={() => {

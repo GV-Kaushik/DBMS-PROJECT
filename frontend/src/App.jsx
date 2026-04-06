@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 // layouts
 import AdminLayout from "./pages/Layouts/AdminLayout";
+import DesignLayout from "./pages/Layouts/DesignLayout";
 // Admin pages
 import Dashboard from "./pages/admin/Dashboard";
 import Cars from "./pages/admin/Cars";
@@ -18,25 +19,19 @@ import Dealers from "./pages/admin/Dealers";
 import Sales from "./pages/admin/Sales";
 import Users from "./pages/admin/Users";
 
-
-
-
 // other roles
-import Design from "./components/Design";
 import Production_role from "./components/Production_role";
 import Sales_role from "./components/Sales_role";
-
-
 
 function App() {
   const router = createBrowserRouter([
     { path: "/", element: <Login /> },
-    
-       // ADMIN ROUTES
+
+    // ADMIN ROUTES
     {
       path: "/admin",
       element: (
-        <ProtectedRoute correctRole="admin">
+        <ProtectedRoute allowedRoles={["admin"]}>
           <AdminLayout />
         </ProtectedRoute>
       ),
@@ -58,15 +53,24 @@ function App() {
     {
       path: "/design",
       element: (
-        <ProtectedRoute correctRole="design">
-          <Design />
+        <ProtectedRoute allowedRoles={["design"]}>
+          <DesignLayout />
         </ProtectedRoute>
       ),
+      children: [
+        { index: true, element: <Cars /> },
+
+        { path: "cars", element: <Cars /> },
+        { path: "assign-parts", element: <AssignParts /> },
+        { path: "parts", element: <Parts /> },
+        { path: "suppliers", element: <Suppliers /> },
+        { path: "supply-records", element: <SupplyRecords /> },
+      ],
     },
     {
       path: "/production",
       element: (
-        <ProtectedRoute correctRole="production">
+        <ProtectedRoute allowedRoles={["production"]}>
           <Production_role />
         </ProtectedRoute>
       ),
@@ -74,7 +78,7 @@ function App() {
     {
       path: "/sales",
       element: (
-        <ProtectedRoute correctRole="sales">
+        <ProtectedRoute allowedRoles={["sales"]}>
           <Sales_role />
         </ProtectedRoute>
       ),
