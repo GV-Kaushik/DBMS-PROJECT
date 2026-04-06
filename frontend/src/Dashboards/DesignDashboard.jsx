@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../../api";
+import api from "../api";
 import { useNavigate } from "react-router-dom";
 import { FaCar, FaCogs, FaTools, FaTruck, FaBox } from "react-icons/fa";
 

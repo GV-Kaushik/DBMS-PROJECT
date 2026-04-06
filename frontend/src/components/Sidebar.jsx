@@ -144,7 +144,7 @@ export default function Sidebar() {
                   icon: <FaHandshake />,
                 },
                 {
-                  path: "/sales/sales",
+                  path: "/sales/sales-records",
                   label: "Sales Records",
                   icon: <FaDollarSign />,
                 },

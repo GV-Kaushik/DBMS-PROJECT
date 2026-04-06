@@ -6,6 +6,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./pages/Layouts/AdminLayout";
 import DesignLayout from "./pages/Layouts/DesignLayout";
 import ProductionLayout from "./pages/Layouts/ProductionLayout";
+import SalesLayout from "./pages/Layouts/SalesLayout";
+
 // Admin pages
 import Dashboard from "./pages/admin/Dashboard";
 import Cars from "./pages/admin/Cars";
@@ -19,8 +21,9 @@ import Employees from "./pages/admin/Employees";
 import Dealers from "./pages/admin/Dealers";
 import Sales from "./pages/admin/Sales";
 import Users from "./pages/admin/Users";
-import DesignDashboard from "./pages/design/DesignDashboard";
-import ProductionDashboard from "./pages/production/ProductionDashboard";
+import DesignDashboard from "./Dashboards/DesignDashboard";
+import ProductionDashboard from "./Dashboards/ProductionDashboard";
+import SalesDashboard from "./Dashboards/SalesDashboard";
 
 function App() {
   const router = createBrowserRouter([
@@ -75,11 +78,22 @@ function App() {
       ),
       children: [
         { index: true, element: <ProductionDashboard /> },
-
         { path: "records", element: <Production /> },
-
         { path: "factories", element: <Factories /> },
         { path: "employees", element: <Employees /> },
+      ],
+    },
+    {
+      path: "/sales",
+      element: (
+        <ProtectedRoute allowedRoles={["sales"]}>
+          <SalesLayout />
+        </ProtectedRoute>
+      ),
+      children: [
+        { index: true, element: <SalesDashboard /> },
+        { path: "dealers", element: <Dealers /> },
+        { path: "sales-records", element: <Sales /> },
       ],
     },
   ]);
