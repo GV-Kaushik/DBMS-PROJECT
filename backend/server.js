@@ -3,15 +3,22 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 import pool from "./config/db.js";
 import bcrypt from "bcrypt";
+import dotenv from "dotenv";
+dotenv.config();
+
+
+
+
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
+
 
 app.use(cors());
 app.use(express.json());
 
 
-const SECRET = "secret";
+const SECRET = process.env.JWT_SECRET;
 
 // Login
 app.post("/login", async (req, res) => {
@@ -974,6 +981,6 @@ app.delete("/users/:id", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
